@@ -216,43 +216,44 @@ app.get('/api/admin/user-queries', requireAdminAuth, (req, res) => {
     return res.json({ success: true, queries });
 });
 
-app.get('/api/admin/keys', requireAdminAuth, (req, res) => {
+app.get('/api/admin/keys', requireAdminAuth, async (req, res) => {
+    await keyManager.syncFromGist();
     return res.json({ success: true, keys: keyManager.listKeys() });
 });
 
-app.post('/api/admin/generate-key', requireAdminAuth, (req, res) => {
+app.post('/api/admin/generate-key', requireAdminAuth, async (req, res) => {
     const { role, label, expiresDays, maxUses, features, rateLimit } = req.body || {};
-    const newKey = keyManager.generateKey({ role, label, expiresDays, maxUses, features, rateLimit });
+    const newKey = await keyManager.generateKey({ role, label, expiresDays, maxUses, features, rateLimit });
     return res.json({ success: true, key: newKey });
 });
 
-app.post('/api/admin/update-key', requireAdminAuth, (req, res) => {
+app.post('/api/admin/update-key', requireAdminAuth, async (req, res) => {
     const { key, role, label, active, maxUses, expiresAt, features, rateLimit } = req.body || {};
-    const updated = keyManager.updateKey(key, { role, label, active, maxUses, expiresAt, features, rateLimit });
+    const updated = await keyManager.updateKey(key, { role, label, active, maxUses, expiresAt, features, rateLimit });
     if (!updated) {
         return res.status(404).json({ success: false, error: 'Key bulunamadı.' });
     }
     return res.json({ success: true, key: updated });
 });
 
-app.post('/api/admin/reactivate-key', requireAdminAuth, (req, res) => {
+app.post('/api/admin/reactivate-key', requireAdminAuth, async (req, res) => {
     const { key } = req.body || {};
-    const updated = keyManager.updateKey(key, { active: true });
+    const updated = await keyManager.updateKey(key, { active: true });
     if (!updated) {
         return res.status(404).json({ success: false, error: 'Key bulunamadı.' });
     }
     return res.json({ success: true, key: updated, message: 'Key tekrar aktif edildi.' });
 });
 
-app.post('/api/admin/revoke-key', requireAdminAuth, (req, res) => {
+app.post('/api/admin/revoke-key', requireAdminAuth, async (req, res) => {
     const { key } = req.body || {};
-    const success = keyManager.revokeKey(key);
+    const success = await keyManager.revokeKey(key);
     return res.json({ success, message: success ? 'Key iptal edildi.' : 'Key bulunamadı.' });
 });
 
-app.post('/api/admin/delete-key', requireAdminAuth, (req, res) => {
+app.post('/api/admin/delete-key', requireAdminAuth, async (req, res) => {
     const { key } = req.body || {};
-    const success = keyManager.deleteKey(key);
+    const success = await keyManager.deleteKey(key);
     return res.json({ success, message: success ? 'Key kalıcı olarak silindi.' : 'Key bulunamadı.' });
 });
 

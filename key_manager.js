@@ -137,7 +137,7 @@ class KeyManager {
         }
     }
 
-    saveKeys() {
+    async saveKeys() {
         const obj = Object.fromEntries(this.keys);
         try {
             fs.writeFileSync(KEYS_FILE, JSON.stringify(obj, null, 2), 'utf8');
@@ -147,7 +147,7 @@ class KeyManager {
             fs.writeFileSync(TMP_KEYS_FILE, JSON.stringify(obj, null, 2), 'utf8');
         } catch (err) {}
 
-        this.syncToGist().catch(() => {});
+        await this.syncToGist();
     }
 
     /**
@@ -191,7 +191,7 @@ class KeyManager {
         // Record usage
         entry.useCount = (entry.useCount || 0) + 1;
         entry.lastUsedAt = new Date().toISOString();
-        this.saveKeys();
+        await this.saveKeys();
 
         return {
             valid: true,
@@ -211,7 +211,7 @@ class KeyManager {
     /**
      * Generates a new access key (supports user, premium, admin)
      */
-    generateKey({ role = 'user', label = 'Client Key', expiresDays = null, maxUses = null, features = {}, rateLimit = null }) {
+    async generateKey({ role = 'user', label = 'Client Key', expiresDays = null, maxUses = null, features = {}, rateLimit = null }) {
         const validRole = ['admin', 'premium', 'user'].includes(role) ? role : 'user';
         const randomHex = crypto.randomBytes(12).toString('hex');
         const prefix = validRole === 'admin' ? 'admin_' : (validRole === 'premium' ? 'prem_' : '');
@@ -245,7 +245,7 @@ class KeyManager {
         };
 
         this.keys.set(key, newEntry);
-        this.saveKeys();
+        await this.saveKeys();
         console.log(`🔑 [KEY MANAGER] Generated new [${validRole.toUpperCase()}] key: ${key} (${newEntry.label})`);
         return newEntry;
     }
@@ -253,12 +253,12 @@ class KeyManager {
     /**
      * Revokes or deletes a key
      */
-    revokeKey(keyString) {
+    async revokeKey(keyString) {
         if (!keyString) return false;
         const entry = this.keys.get(keyString.trim());
         if (entry) {
             entry.active = false;
-            this.saveKeys();
+            await this.saveKeys();
             console.log(`🚫 [KEY MANAGER] Revoked key: ${keyString}`);
             return true;
         }
@@ -268,7 +268,7 @@ class KeyManager {
     /**
      * Updates an existing key's metadata (role, label, active, maxUses, expiresAt, features, rateLimit)
      */
-    updateKey(keyString, updates = {}) {
+    async updateKey(keyString, updates = {}) {
         if (!keyString) return null;
         const entry = this.keys.get(keyString.trim());
         if (!entry) return null;
@@ -290,22 +290,24 @@ class KeyManager {
         }
 
         entry.updatedAt = new Date().toISOString();
-        this.saveKeys();
+        await this.saveKeys();
         console.log(`✏️ [KEY MANAGER] Updated key: ${keyString} (${entry.label}, role: ${entry.role})`);
         return entry;
     }
 
     /**
-     * Deletes a key permanently
+     * Permanently deletes a key from database
      */
-    deleteKey(keyString) {
+    async deleteKey(keyString) {
         if (!keyString) return false;
-        const removed = this.keys.delete(keyString.trim());
-        if (removed) {
-            this.saveKeys();
-            console.log(`🗑️ [KEY MANAGER] Deleted key permanently: ${keyString}`);
+        const trimmed = keyString.trim();
+        if (this.keys.has(trimmed)) {
+            this.keys.delete(trimmed);
+            await this.saveKeys();
+            console.log(`🗑️ [KEY MANAGER] Permanently deleted key: ${trimmed}`);
+            return true;
         }
-        return removed;
+        return false;
     }
 
     /**
