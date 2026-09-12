@@ -1,0 +1,85 @@
+{
+  "dfinder_master_2026": {
+    "id": "master_01",
+    "key": "dfinder_master_2026",
+    "role": "admin",
+    "label": "Master Administrator Key",
+    "createdAt": "2026-09-12T10:39:04.754Z",
+    "expiresAt": null,
+    "maxUses": null,
+    "useCount": 44,
+    "active": true,
+    "lastUsedAt": "2026-09-12T10:59:12.378Z"
+  },
+  "dfinder_demo_pass_xyz": {
+    "id": "demo_01",
+    "key": "dfinder_demo_pass_xyz",
+    "role": "user",
+    "label": "Global Demo Key",
+    "createdAt": "2026-09-12T10:39:04.755Z",
+    "expiresAt": null,
+    "maxUses": null,
+    "useCount": 4,
+    "active": true,
+    "lastUsedAt": "2026-09-12T11:11:40.827Z",
+    "updatedAt": "2026-09-12T11:04:15.679Z"
+  },
+  "dfinder_610bd42f995a2bc851b384d4": {
+    "id": "key_fe3645c10dcb",
+    "key": "dfinder_610bd42f995a2bc851b384d4",
+    "role": "user",
+    "label": "Test User",
+    "createdAt": "2026-09-12T10:39:04.775Z",
+    "expiresAt": "2026-09-19T10:39:04.775Z",
+    "maxUses": null,
+    "useCount": 1,
+    "active": true,
+    "lastUsedAt": "2026-09-12T10:39:04.776Z"
+  },
+  "dfinder_866e204c87446bdee1400f56": {
+    "id": "key_3c3a79c68242",
+    "key": "dfinder_866e204c87446bdee1400f56",
+    "role": "user",
+    "label": "Automated Client Key",
+    "createdAt": "2026-09-12T10:42:02.806Z",
+    "expiresAt": "2026-10-12T10:42:02.806Z",
+    "maxUses": null,
+    "useCount": 1,
+    "active": true,
+    "lastUsedAt": "2026-09-12T10:42:02.811Z"
+  },
+  "dfinder_d1f4a407659d820633cae1ef": {
+    "id": "key_9ff9c76505c3",
+    "key": "dfinder_d1f4a407659d820633cae1ef",
+    "role": "user",
+    "label": "Müşteri Key",
+    "createdAt": "2026-09-12T10:51:48.681Z",
+    "expiresAt": "2026-10-12T10:51:48.681Z",
+    "maxUses": null,
+    "useCount": 0,
+    "active": false,
+    "updatedAt": "2026-09-12T11:03:51.681Z"
+  },
+  "dfinder_95ed112acc0d88f259cd3f7a": {
+    "id": "key_b5634382f3d7",
+    "key": "dfinder_95ed112acc0d88f259cd3f7a",
+    "role": "user",
+    "label": "Müşteri Key",
+    "createdAt": "2026-09-12T10:54:00.717Z",
+    "expiresAt": "2026-10-12T10:54:00.717Z",
+    "maxUses": null,
+    "useCount": 0,
+    "active": true
+  },
+  "dfinder_84ce1bd7380421897a0597cd": {
+    "id": "key_7684a175b44b",
+    "key": "dfinder_84ce1bd7380421897a0597cd",
+    "role": "user",
+    "label": "Müşteri Key",
+    "createdAt": "2026-09-12T11:01:55.274Z",
+    "expiresAt": "2026-10-12T11:01:55.274Z",
+    "maxUses": null,
+    "useCount": 0,
+    "active": false
+  }
+}

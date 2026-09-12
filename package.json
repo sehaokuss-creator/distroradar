@@ -1,0 +1,16 @@
+{
+  "name": "delightful-bardeen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "puppeteer-core": "^25.10.0",
+    "seroval": "^1.6.6"
+  }
+}

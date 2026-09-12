@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yönetici Paneli - DistroRadar Pro</title>
+  
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+              950: '#022c22',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #05070a;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: rgba(13, 17, 23, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+    .neon-border-amber {
+      box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25);
+    }
+    .radar-sweep {
+      background: conic-gradient(from 0deg at 50% 50%, rgba(245, 158, 11, 0) 0deg, rgba(245, 158, 11, 0.35) 60deg, rgba(245, 158, 11, 0) 120deg);
+      animation: spin 3s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .shake {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #07090e; }
+    ::-webkit-scrollbar-thumb { background: #1f293d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #374151; }
+  </style>
+</head>
+<body class="min-h-screen selection:bg-amber-500/30 selection:text-amber-200">
+
+  <!-- ========================================================================= -->
+  <!-- FULL SCREEN SPLASH LOADING OVERLAY                                        -->
+  <!-- ========================================================================= -->
+  <div id="adminLoader" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#05070a]/95 backdrop-blur-xl transition-all duration-300">
+    <div class="relative w-28 h-28 flex items-center justify-center">
+      <div class="absolute inset-0 rounded-full border border-amber-500/20"></div>
+      <div class="absolute inset-2 rounded-full border border-amber-500/30"></div>
+      <div class="absolute inset-0 rounded-full radar-sweep opacity-70"></div>
+      <div class="w-14 h-14 rounded-full bg-zinc-950 border border-amber-500/50 flex items-center justify-center text-amber-400 shadow-xl shadow-amber-500/20 z-10">
+        <i class="fa-solid fa-shield-halved text-2xl animate-pulse"></i>
+      </div>
+    </div>
+    <div class="mt-6 text-center space-y-1.5">
+      <h3 id="loaderTitle" class="text-base font-bold text-white tracking-wide">Yönetici Paneli Doğrulanıyor...</h3>
+      <p id="loaderSub" class="text-xs text-zinc-400 font-mono">Güvenlik anahtarı ve yetkiler kontrol ediliyor</p>
+    </div>
+    <div class="w-48 h-1 bg-zinc-900 rounded-full mt-4 overflow-hidden">
+      <div id="loaderProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300" style="width: 40%"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- IN-APP FLOATING TOAST NOTIFICATION CONTAINER                             -->
+  <!-- ========================================================================= -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4"></div>
+
+  <!-- ========================================================================= -->
+  <!-- IN-APP CONFIRMATION MODAL                                                 -->
+  <!-- ========================================================================= -->
+  <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-card rounded-2xl p-6 max-w-md w-full border border-zinc-700 shadow-2xl space-y-4">
+      <div class="flex items-center gap-3">
+        <div id="confirmIconBox" class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+          <i id="confirmIcon" class="fa-solid fa-triangle-exclamation text-lg"></i>
+        </div>
+        <div>
+          <h4 id="confirmTitle" class="text-sm font-bold text-white">İşlemi Onaylayın</h4>
+          <p id="confirmMessage" class="text-xs text-zinc-400 mt-0.5">Bu işlemi gerçekleştirmek istediğinize emin misiniz?</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button onclick="closeConfirmModal(false)" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium border border-zinc-800 transition cursor-pointer">
+          Vazgeç
+        </button>
+        <button id="confirmOkBtn" onclick="closeConfirmModal(true)" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-lg shadow-rose-600/20 cursor-pointer">
+          Onayla ve Devam Et
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- KEY SETTINGS & PERMISSIONS MODAL (⚙️ AYARLAR SİMGESİ İLE AÇILAN MODAL)     -->
+  <!-- ========================================================================= -->
+  <div id="keySettingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="glass-card rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-zinc-700 shadow-2xl space-y-5 relative max-h-[92vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <i class="fa-solid fa-sliders text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Yetki & Özellik Ayarları</h3>
+            <p class="text-xs text-zinc-400 font-mono" id="modalKeySubtitle">dfinder_...</p>
+          </div>
+        </div>
+        <button onclick="closeKeySettingsModal()" class="w-8 h-8 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="saveKeySettings(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="editKeyString" />
+
+        <!-- Label / Customer Name -->
+        <div>
+          <label class="block text-zinc-400 font-medium mb-1.5">Kullanıcı / Müşteri Etiketi</label>
+          <input id="editKeyLabel" type="text" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-indigo-500 focus:outline-none" required />
+        </div>
+
+        <!-- Role / Tier Select -->
+        <div>
+          <label class="block text-zinc-400 font-medium mb-1.5">Kullanıcı Rolü & Üyelik Seviyesi</label>
+          <div class="grid grid-cols-3 gap-2.5">
+            <label class="cursor-pointer">
+              <input type="radio" name="editKeyRole" value="user" class="peer sr-only" id="roleRadioUser" onchange="onRoleSelectChange('user')" />
+              <div class="p-3 rounded-xl border border-zinc-800 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-300 text-zinc-400 transition text-center space-y-1">
+                <i class="fa-solid fa-user block text-sm mb-1"></i>
+                <span class="font-bold block text-xs">Standart</span>
+                <span class="text-[10px] text-zinc-500 block">30 İstek/dk</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="editKeyRole" value="premium" class="peer sr-only" id="roleRadioPremium" onchange="onRoleSelectChange('premium')" />
+              <div class="p-3 rounded-xl border border-zinc-800 peer-checked:border-purple-500 peer-checked:bg-purple-500/10 peer-checked:text-purple-300 text-zinc-400 transition text-center space-y-1">
+                <i class="fa-solid fa-gem block text-sm mb-1 text-purple-400"></i>
+                <span class="font-bold block text-xs">Premium VIP</span>
+                <span class="text-[10px] text-purple-400/70 block">120 İstek/dk</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="editKeyRole" value="admin" class="peer sr-only" id="roleRadioAdmin" onchange="onRoleSelectChange('admin')" />
+              <div class="p-3 rounded-xl border border-zinc-800 peer-checked:border-amber-500 peer-checked:bg-amber-500/10 peer-checked:text-amber-300 text-zinc-400 transition text-center space-y-1">
+                <i class="fa-solid fa-crown block text-sm mb-1 text-amber-400"></i>
+                <span class="font-bold block text-xs">Yönetici</span>
+                <span class="text-[10px] text-amber-400/70 block">Sınırsız</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Permissions / Features Checkboxes -->
+        <div class="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800/80 space-y-2.5">
+          <label class="block text-zinc-300 font-bold">Özel Özellik İzinleri</label>
+          
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" id="editFeatureLookup" class="rounded bg-zinc-950 border-zinc-700 text-emerald-500 focus:ring-0 w-4 h-4 cursor-pointer" />
+            <div>
+              <span class="text-white font-medium">Distribütör Tespiti Yetkisi</span>
+              <span class="text-zinc-500 block text-[11px]">Spotify ve YouTube şarkılarının ana distribütörünü bulabilir.</span>
+            </div>
+          </label>
+
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" id="editFeatureStores" class="rounded bg-zinc-950 border-zinc-700 text-purple-500 focus:ring-0 w-4 h-4 cursor-pointer" />
+            <div>
+              <span class="text-white font-medium">40+ Mağaza Dağıtım Denetimi (Store Checker)</span>
+              <span class="text-zinc-500 block text-[11px]">Şarkının hangi mağazalara dağıtıldığını canlı denetleyebilir.</span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Advanced Limits (Rate Limit & Max Queries) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-zinc-400 font-medium mb-1">Hız Sınırı (Rate Limit)</label>
+            <select id="editRateLimit" class="w-full px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-indigo-500 focus:outline-none">
+              <option value="30">Standart (30 İstek/dk)</option>
+              <option value="60">Hızlı (60 İstek/dk)</option>
+              <option value="120">Premium (120 İstek/dk)</option>
+              <option value="0">Sınırsız (Limitsiz İstek)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-zinc-400 font-medium mb-1">Maksimum Kullanım Kotası</label>
+            <input id="editMaxUses" type="number" placeholder="Boş = Sınırsız" class="w-full px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-indigo-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Expiry Extension -->
+        <div>
+          <label class="block text-zinc-400 font-medium mb-1">Süre Güncelleme / Uzatma</label>
+          <select id="editExpireExtend" class="w-full px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:border-indigo-500 focus:outline-none">
+            <option value="keep" selected>Mevcut Tarihi Koru</option>
+            <option value="7">+7 Gün Uzat</option>
+            <option value="30">+30 Gün (1 Ay) Uzat</option>
+            <option value="90">+90 Gün (3 Ay) Uzat</option>
+            <option value="365">+1 Yıl Uzat</option>
+            <option value="lifetime">Sınırsız (Lifetime) Yap</option>
+          </select>
+          <p id="editCurrentExpiryText" class="text-[11px] text-zinc-500 mt-1 font-mono">Mevcut Bitiş: -</p>
+        </div>
+
+        <!-- Status Toggle -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-zinc-900/50 border border-zinc-800">
+          <div>
+            <span class="text-white font-medium block">Anahtar Durumu</span>
+            <span class="text-zinc-500 text-[11px]">Pasife alınan anahtar hiçbir istek gerçekleştiremez.</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="editKeyActiveToggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-zinc-800">
+          <button
+            type="button"
+            onclick="deleteKeyFromModal()"
+            class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Sistemden Kalıcı Olarak Sil</span>
+          </button>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onclick="closeKeySettingsModal()"
+              class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition cursor-pointer"
+            >
+              Vazgeç
+            </button>
+            <button
+              type="submit"
+              id="btnSaveKeySettings"
+              class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-lg shadow-indigo-600/20 flex items-center gap-1.5 cursor-pointer"
+            >
+              <i class="fa-solid fa-check"></i>
+              <span>Ayarları Kaydet</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. ADMIN PASSWORD LOGIN GATE                                             -->
+  <!-- ========================================================================= -->
+  <div id="adminLoginGate" class="flex min-h-screen items-center justify-center p-4">
+    <div id="adminLoginCard" class="glass-card neon-border-amber rounded-3xl p-8 sm:p-10 max-w-md w-full border border-zinc-800 transition-all duration-300">
+      
+      <div class="text-center space-y-3 mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-inner mb-2">
+          <i class="fa-solid fa-shield-halved text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-black text-white tracking-tight">Yönetici Paneli</h1>
+        <p class="text-xs text-zinc-400">
+          Kullanıcı IP logları, sorgu geçmişi ve erişim anahtarlarını yönetmek için şifrenizi girin.
+        </p>
+      </div>
+
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-mono text-zinc-400 mb-2 font-medium">YÖNETİCİ ŞİFRESİ</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-zinc-500">
+              <i class="fa-solid fa-lock text-sm"></i>
+            </span>
+            <input
+              type="password"
+              id="adminPasswordInput"
+              placeholder="Yönetici şifrenizi giriniz..."
+              class="w-full pl-10 pr-4 py-3 bg-zinc-950/80 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-mono"
+              required
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div id="adminLoginError" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+          <span id="adminLoginErrorText">Hatalı yönetici şifresi.</span>
+        </div>
+
+        <button
+          type="submit"
+          id="adminLoginBtn"
+          class="w-full py-3 px-4 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-zinc-950 font-bold rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer"
+        >
+          <i class="fa-solid fa-key"></i>
+          <span>Panele Giriş Yap</span>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-zinc-800/80 text-center">
+        <a href="/" class="text-xs text-zinc-500 hover:text-emerald-400 transition font-mono">
+          ← Ana Sayfaya Dön
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2. ADMIN DASHBOARD VIEW                                                  -->
+  <!-- ========================================================================= -->
+  <div id="adminDashboard" class="hidden min-h-screen pb-16">
+    
+    <!-- Top Nav -->
+    <header class="border-b border-zinc-800 bg-[#07090e]/95 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <span class="font-bold text-sm text-white flex items-center gap-1.5">
+              <span>DistroRadar</span>
+              <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] uppercase font-bold">ADMIN PANEL</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="/" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            <span class="hidden sm:inline">Canlı Site</span>
+          </a>
+          <button onclick="handleAdminLogout()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-power-off"></i>
+            <span>Çıkış Yap</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+      
+      <!-- Quick Stats Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="glass-card rounded-2xl p-5 border border-zinc-800">
+          <div class="flex items-center justify-between text-zinc-500 text-xs font-mono mb-2">
+            <span>TOPLAM SORGU</span>
+            <i class="fa-solid fa-chart-line text-emerald-400"></i>
+          </div>
+          <div id="statTotalQueries" class="text-3xl font-black text-white font-mono">0</div>
+          <div class="text-[11px] text-zinc-500 mt-1">Tüm zamanlar</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 border border-zinc-800">
+          <div class="flex items-center justify-between text-zinc-500 text-xs font-mono mb-2">
+            <span>BUGÜNKÜ SORGULAR</span>
+            <i class="fa-solid fa-bolt text-indigo-400"></i>
+          </div>
+          <div id="statQueriesToday" class="text-3xl font-black text-indigo-400 font-mono">0</div>
+          <div class="text-[11px] text-zinc-500 mt-1">Bugün yapılan istekler</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 border border-zinc-800">
+          <div class="flex items-center justify-between text-zinc-500 text-xs font-mono mb-2">
+            <span>BENZERSİZ IP'LER</span>
+            <i class="fa-solid fa-network-wired text-amber-400"></i>
+          </div>
+          <div id="statUniqueIps" class="text-3xl font-black text-amber-400 font-mono">0</div>
+          <div class="text-[11px] text-zinc-500 mt-1">Giriş yapan farklı IP'ler</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 border border-zinc-800">
+          <div class="flex items-center justify-between text-zinc-500 text-xs font-mono mb-2">
+            <span>KEY DURUMU</span>
+            <i class="fa-solid fa-key text-emerald-400"></i>
+          </div>
+          <div class="flex items-baseline gap-2 font-mono">
+            <span id="statActiveKeys" class="text-3xl font-black text-emerald-400">0</span>
+            <span class="text-xs text-zinc-400">Aktif /</span>
+            <span id="statRevokedKeys" class="text-base font-bold text-rose-400">0</span>
+            <span class="text-xs text-zinc-400">Pasif</span>
+          </div>
+          <div class="text-[11px] text-zinc-500 mt-1">Kayıtlı lisans anahtarları</div>
+        </div>
+
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- SECTION 1: KEY GENERATOR & CATEGORIZED MANAGEMENT                 -->
+      <!-- ================================================================= -->
+      <div class="glass-card rounded-2xl p-6 border border-zinc-800 space-y-6">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div class="flex items-center gap-2 font-bold text-white text-base">
+            <i class="fa-solid fa-key text-emerald-400"></i>
+            <span>Erişim Anahtarı Üret & Yetkileri Yönet</span>
+          </div>
+        </div>
+
+        <!-- Key Generation Form (With Role/Plan Selection) -->
+        <div class="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+            <div class="sm:col-span-2">
+              <label class="block text-zinc-400 mb-1 font-medium">Kullanıcı / Müşteri İsmi</label>
+              <input id="keyLabelInput" type="text" placeholder="örn: Müşteri - Ahmet Can" class="w-full px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white focus:border-emerald-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1 font-medium">Yetki & Rol</label>
+              <select id="keyRoleSelect" class="w-full px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white focus:border-emerald-500 focus:outline-none">
+                <option value="user" selected>👤 Standart (30/dk)</option>
+                <option value="premium">⭐ Premium VIP (120/dk)</option>
+                <option value="admin">👑 Admin (Limitsiz)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-zinc-400 mb-1 font-medium">Süre</label>
+              <select id="keyDurationSelect" class="w-full px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white focus:border-emerald-500 focus:outline-none">
+                <option value="1">1 Gün</option>
+                <option value="7">7 Gün</option>
+                <option value="30" selected>30 Gün (1 Ay)</option>
+                <option value="90">90 Gün (3 Ay)</option>
+                <option value="365">1 Yıl</option>
+                <option value="0">Sınırsız (Lifetime)</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button
+                onclick="createKey()"
+                id="btnCreateKey"
+                class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-zinc-950 font-bold rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
+              >
+                <i class="fa-solid fa-plus"></i>
+                <span>Yeni Key Üret</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORY TABS FOR KEYS (Aktif / İptal / Tümü Ayrımı) -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="keyTabAll"
+              onclick="setKeyCategory('all')"
+              class="px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-indigo-500/15 text-indigo-300 border-indigo-500/40 shadow-sm"
+            >
+              <span>Tüm Keyler</span>
+              <span id="badgeKeyAll" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-zinc-800 text-zinc-300">0</span>
+            </button>
+            <button
+              id="keyTabActive"
+              onclick="setKeyCategory('active')"
+              class="px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700"
+            >
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Aktif Keyler</span>
+              <span id="badgeKeyActive" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">0</span>
+            </button>
+            <button
+              id="keyTabRevoked"
+              onclick="setKeyCategory('revoked')"
+              class="px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700"
+            >
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+              <span>İptal / Biten Keyler</span>
+              <span id="badgeKeyRevoked" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300">0</span>
+            </button>
+          </div>
+          <div id="keyCategoryHint" class="text-[11px] text-zinc-500 font-mono">
+            Tüm anahtarlar listeleniyor
+          </div>
+        </div>
+
+        <!-- Keys Table (With Settings Icon and Delete Button) -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-zinc-500 font-mono border-b border-zinc-800/80 pb-2">
+                <th class="py-2.5 px-3">ANAHTAR (KEY)</th>
+                <th class="py-2.5 px-3">KULLANICI / ETİKET</th>
+                <th class="py-2.5 px-3">YETKİ & ROL</th>
+                <th class="py-2.5 px-3">SON GEÇERLİLİK</th>
+                <th class="py-2.5 px-3">KULLANIM</th>
+                <th class="py-2.5 px-3">DURUM</th>
+                <th class="py-2.5 px-3 text-right">İŞLEMLER</th>
+              </tr>
+            </thead>
+            <tbody id="keysTableBody" class="divide-y divide-zinc-800/50">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- SECTION 2: LIVE IP LOGS & CATEGORIZED ACTIVITY TRACKING          -->
+      <!-- ================================================================= -->
+      <div class="glass-card rounded-2xl p-6 border border-zinc-800 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+          <div>
+            <div class="flex items-center gap-2 font-bold text-white text-base">
+              <i class="fa-solid fa-tower-broadcast text-indigo-400"></i>
+              <span>Canlı IP & Kullanıcı Etkinlik Takibi</span>
+            </div>
+            <p class="text-xs text-zinc-400 mt-1">
+              Siteye giren kullanıcıların IP adresleri ve sorguladıkları tüm şarkı kayıtları.
+            </p>
+          </div>
+          <button onclick="loadAdminData()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-mono transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Verileri Yenile</span>
+          </button>
+        </div>
+
+        <!-- CATEGORY TABS & VIEW SWITCHER FOR QUERIES / USERS -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
+          <!-- Filter Tabs -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="actTabAll"
+              onclick="setActivityCategory('all')"
+              class="px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-indigo-500/15 text-indigo-300 border-indigo-500/40 shadow-sm"
+            >
+              <span>Tümü</span>
+              <span id="badgeActAll" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-zinc-800 text-zinc-300">0</span>
+            </button>
+            <button
+              id="actTabActive"
+              onclick="setActivityCategory('active')"
+              class="px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700"
+            >
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Aktif Key Sorguları</span>
+              <span id="badgeActActive" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">0</span>
+            </button>
+            <button
+              id="actTabRevoked"
+              onclick="setActivityCategory('revoked')"
+              class="px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700"
+            >
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+              <span>İptal / Biten Key Sorguları</span>
+              <span id="badgeActRevoked" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300">0</span>
+            </button>
+          </div>
+
+          <!-- View Mode Switcher -->
+          <div class="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-xs self-start md:self-auto">
+            <button
+              id="viewBtnUsers"
+              onclick="setActivityView('users')"
+              class="px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer bg-zinc-800 text-white shadow"
+            >
+              <i class="fa-solid fa-users text-[11px]"></i>
+              <span>Kullanıcı / IP Bazında</span>
+            </button>
+            <button
+              id="viewBtnStream"
+              onclick="setActivityView('stream')"
+              class="px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200"
+            >
+              <i class="fa-solid fa-music text-[11px]"></i>
+              <span>Tekil Şarkı Sorguları</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW 1: USERS / IPS TABLE -->
+        <div id="usersTableView" class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-zinc-500 font-mono border-b border-zinc-800/80 pb-2">
+                <th class="py-2.5 px-3">IP ADRESİ</th>
+                <th class="py-2.5 px-3">KULLANILAN KEY & ETİKET</th>
+                <th class="py-2.5 px-3">YETKİ & DURUM</th>
+                <th class="py-2.5 px-3">TOPLAM SORGU</th>
+                <th class="py-2.5 px-3">SON ARADIĞI ŞARKI</th>
+                <th class="py-2.5 px-3">SON AKTİFLİK</th>
+                <th class="py-2.5 px-3 text-right">DETAY</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-zinc-800/50">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- VIEW 2: STREAM CARDS VIEW -->
+        <div id="streamCardsView" class="hidden space-y-3">
+          <div id="streamCardsList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- SECTION 3: SECURITY & ADMIN PASSWORD SETTINGS                    -->
+      <!-- ================================================================= -->
+      <div class="glass-card rounded-2xl p-6 border border-zinc-800 space-y-4">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div class="flex items-center gap-2 font-bold text-white text-base">
+            <i class="fa-solid fa-lock text-amber-400"></i>
+            <span>Yönetici Güvenlik Ayarları</span>
+          </div>
+        </div>
+
+        <form onsubmit="handleChangePassword(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div>
+            <label class="block text-zinc-400 mb-1 font-medium">Mevcut Admin Şifresi</label>
+            <input id="curPassInput" type="password" placeholder="Şu anki şifre..." class="w-full px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white focus:border-amber-500 focus:outline-none" required />
+          </div>
+          <div>
+            <label class="block text-zinc-400 mb-1 font-medium">Yeni Admin Şifresi</label>
+            <input id="newPassInput" type="password" placeholder="Yeni şifre belirleyin..." class="w-full px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-white focus:border-amber-500 focus:outline-none" required />
+          </div>
+          <div class="flex items-end">
+            <button
+              type="submit"
+              id="btnChangePass"
+              class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-zinc-950 font-bold rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              <i class="fa-solid fa-check"></i>
+              <span>Şifreyi Güncelle</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 3. SLIDE-OUT ACTIVITY DRAWER                                              -->
+  <!-- ========================================================================= -->
+  <div id="drawerOverlay" onclick="closeDrawer()" class="hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity"></div>
+
+  <div id="activityDrawer" class="fixed top-0 right-0 bottom-0 w-full max-w-lg bg-[#0c0f17] border-l border-zinc-800 shadow-2xl z-50 p-6 flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+    
+    <!-- Drawer Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <h3 id="drawerIpTitle" class="text-lg font-bold text-white font-mono">127.0.0.1</h3>
+        </div>
+        <p id="drawerKeySub" class="text-xs text-zinc-400 font-mono mt-0.5">dfinder_...</p>
+      </div>
+      <button onclick="closeDrawer()" class="w-8 h-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Drawer Key Status Banner -->
+    <div id="drawerStatusBanner" class="mt-3"></div>
+
+    <!-- Drawer Query Count Badge -->
+    <div class="py-3 flex items-center justify-between text-xs border-b border-zinc-800/60 font-mono mt-1">
+      <span class="text-zinc-400">Yaptığı Tüm Aramalar:</span>
+      <span id="drawerQueryCount" class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">0 Sorgu</span>
+    </div>
+
+    <!-- Visual Query Cards List (NO raw links) -->
+    <div id="drawerCardsList" class="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
+      <!-- Cards rendered dynamically -->
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="pt-4 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-500 font-mono">
+      <span>DistroRadar İstihbarat Logu</span>
+      <button onclick="closeDrawer()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs transition cursor-pointer">
+        Kapat
+      </button>
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC                                                          -->
+  <!-- ========================================================================= -->
+  <script>
+    let adminToken = sessionStorage.getItem('distro_admin_token') || null;
+
+    // State
+    let allKeys = [];
+    let currentKeyCategory = 'all'; // 'all' | 'active' | 'revoked'
+
+    let allUsers = [];
+    let allQueries = [];
+    let currentActivityCategory = 'all'; // 'all' | 'active' | 'revoked'
+    let currentActivityView = 'users'; // 'users' | 'stream'
+
+    // Toast Logic
+    function showToast({ title, message, type = 'info', keyToCopy = null }) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const borderColor = type === 'success' ? 'border-emerald-500/40 shadow-emerald-500/10' : 
+                          type === 'error' ? 'border-rose-500/40 shadow-rose-500/10' : 
+                          'border-zinc-700 shadow-zinc-950/50';
+      const iconColor = type === 'success' ? 'text-emerald-400 bg-emerald-500/15' : 
+                        type === 'error' ? 'text-rose-400 bg-rose-500/15' : 
+                        'text-indigo-400 bg-indigo-500/15';
+      const icon = type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-bell';
+
+      toast.className = `pointer-events-auto p-4 rounded-2xl bg-[#0e121b]/95 border ${borderColor} shadow-2xl backdrop-blur-xl transform transition-all duration-300 translate-y-2 opacity-0 flex flex-col gap-2.5`;
+
+      let keySnippetHtml = '';
+      if (keyToCopy) {
+        keySnippetHtml = `
+          <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-zinc-950/80 border border-zinc-800 font-mono text-xs">
+            <span class="text-emerald-400 font-bold truncate">${keyToCopy}</span>
+            <button onclick="copyToClipboard('${keyToCopy}', this)" class="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-[11px] transition shrink-0 cursor-pointer flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i>
+              <span>Kopyala</span>
+            </button>
+          </div>
+        `;
+      }
+
+      toast.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-xl ${iconColor} flex items-center justify-center shrink-0 text-sm mt-0.5">
+            <i class="fa-solid ${icon}"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h4 class="text-xs font-bold text-white">${title}</h4>
+            <p class="text-xs text-zinc-400 mt-0.5 leading-relaxed">${message}</p>
+          </div>
+          <button onclick="this.closest('.pointer-events-auto').remove()" class="text-zinc-500 hover:text-zinc-300 text-xs p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        ${keySnippetHtml}
+        <div class="w-full h-0.5 bg-zinc-800 rounded-full overflow-hidden mt-1">
+          <div class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 animate-[width_4.8s_linear_forwards]" style="width: 100%"></div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.add('opacity-0', 'translate-x-4');
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 4800);
+    }
+
+    // Modal Logic
+    let confirmCallback = null;
+    function showConfirmModal({ title, message, onConfirm, isDanger = true }) {
+      document.getElementById('confirmTitle').innerText = title || 'İşlemi Onaylayın';
+      document.getElementById('confirmMessage').innerText = message || 'Bu işlemi gerçekleştirmek istediğinize emin misiniz?';
+      
+      const okBtn = document.getElementById('confirmOkBtn');
+      const iconBox = document.getElementById('confirmIconBox');
+      const icon = document.getElementById('confirmIcon');
+
+      if (isDanger) {
+        okBtn.className = "px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition shadow-lg shadow-rose-600/20 cursor-pointer";
+        iconBox.className = "w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0";
+        icon.className = "fa-solid fa-triangle-exclamation text-lg";
+      } else {
+        okBtn.className = "px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-lg shadow-emerald-600/20 cursor-pointer";
+        iconBox.className = "w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0";
+        icon.className = "fa-solid fa-circle-check text-lg";
+      }
+
+      confirmCallback = onConfirm;
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal(confirmed) {
+      document.getElementById('confirmModal').classList.add('hidden');
+      if (confirmed && typeof confirmCallback === 'function') {
+        confirmCallback();
+      }
+      confirmCallback = null;
+    }
+
+    // Loader Logic
+    function showLoader(title, sub, progress = 40) {
+      document.getElementById('loaderTitle').innerText = title;
+      document.getElementById('loaderSub').innerText = sub;
+      document.getElementById('loaderProgressBar').style.width = progress + '%';
+      document.getElementById('adminLoader').classList.remove('hidden');
+    }
+
+    function hideLoader() {
+      document.getElementById('loaderProgressBar').style.width = '100%';
+      setTimeout(() => {
+        document.getElementById('adminLoader').classList.add('hidden');
+      }, 350);
+    }
+
+    // Admin Auth
+    async function handleAdminLogin(e) {
+      if (e) e.preventDefault();
+      const password = document.getElementById('adminPasswordInput').value.trim();
+      if (!password) return;
+
+      const btn = document.getElementById('adminLoginBtn');
+      const errBox = document.getElementById('adminLoginError');
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        if (data.success && data.token) {
+          adminToken = data.token;
+          sessionStorage.setItem('distro_admin_token', adminToken);
+          
+          showLoader('Yönetici Oturumu Başlatılıyor...', 'Güvenlik yetkisi onaylanıyor...', 65);
+          setTimeout(() => {
+            hideLoader();
+            unlockAdminDashboard();
+            showToast({ title: 'Giriş Başarılı', message: 'Yönetici paneli başarıyla açıldı.', type: 'success' });
+          }, 800);
+
+        } else {
+          document.getElementById('adminLoginErrorText').innerText = data.error || 'Geçersiz şifre.';
+          errBox.classList.remove('hidden');
+          const card = document.getElementById('adminLoginCard');
+          card.classList.add('shake');
+          setTimeout(() => card.classList.remove('shake'), 400);
+        }
+      } catch (err) {
+        document.getElementById('adminLoginErrorText').innerText = 'Bağlantı hatası.';
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function handleAdminLogout() {
+      showLoader('Oturum Kapatılıyor...', 'Güvenlik protokolü uygulanıyor...', 75);
+      setTimeout(() => {
+        sessionStorage.removeItem('distro_admin_token');
+        adminToken = null;
+        document.getElementById('adminDashboard').classList.add('hidden');
+        document.getElementById('adminLoginGate').classList.remove('hidden');
+        document.getElementById('adminPasswordInput').value = '';
+        hideLoader();
+        showToast({ title: 'Çıkış Yapıldı', message: 'Yönetici oturumu güvenli şekilde sonlandırıldı.', type: 'info' });
+      }, 600);
+    }
+
+    function unlockAdminDashboard() {
+      document.getElementById('adminLoginGate').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.remove('hidden');
+      loadAdminData();
+    }
+
+    // Main Data Fetcher
+    async function loadAdminData() {
+      if (!adminToken) return;
+
+      try {
+        const statsRes = await fetch('/api/admin/stats', {
+          headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        if (statsRes.status === 401) return handleAdminLogout();
+        const stats = await statsRes.json();
+        if (stats.success) {
+          document.getElementById('statTotalQueries').innerText = stats.data.totalQueries || 0;
+          document.getElementById('statQueriesToday').innerText = stats.data.queriesToday || 0;
+          document.getElementById('statUniqueIps').innerText = stats.data.uniqueIps || 0;
+        }
+
+        await Promise.all([
+          loadKeysList(),
+          loadUsersAndQueries()
+        ]);
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // KEY MANAGEMENT & PERMISSIONS (⚙️ AYARLAR VE ROLLER)
+    // =========================================================================
+    async function loadKeysList() {
+      try {
+        const res = await fetch('/api/admin/keys', {
+          headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.keys)) {
+          allKeys = data.keys;
+          renderKeysTable();
+        }
+      } catch (e) {}
+    }
+
+    function setKeyCategory(cat) {
+      currentKeyCategory = cat;
+      
+      const tabAll = document.getElementById('keyTabAll');
+      const tabActive = document.getElementById('keyTabActive');
+      const tabRevoked = document.getElementById('keyTabRevoked');
+      const hint = document.getElementById('keyCategoryHint');
+
+      const inactiveClass = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700';
+
+      tabAll.className = inactiveClass;
+      tabActive.className = inactiveClass;
+      tabRevoked.className = inactiveClass;
+
+      if (cat === 'all') {
+        tabAll.className = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-indigo-500/15 text-indigo-300 border-indigo-500/40 shadow-sm';
+        hint.innerText = 'Tüm anahtarlar listeleniyor';
+      } else if (cat === 'active') {
+        tabActive.className = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-sm';
+        hint.innerText = 'Yalnızca aktif ve geçerli anahtarlar';
+      } else if (cat === 'revoked') {
+        tabRevoked.className = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-rose-500/15 text-rose-300 border-rose-500/40 shadow-sm';
+        hint.innerText = 'İptal edilmiş veya süresi bitmiş anahtarlar';
+      }
+
+      renderKeysTable();
+    }
+
+    function getRoleBadgeHtml(role) {
+      if (role === 'admin') {
+        return '<span class="px-2 py-0.5 rounded-lg text-[10px] font-mono uppercase font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1 w-max"><i class="fa-solid fa-crown text-[9px]"></i> ADMIN</span>';
+      } else if (role === 'premium') {
+        return '<span class="px-2 py-0.5 rounded-lg text-[10px] font-mono uppercase font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1 w-max"><i class="fa-solid fa-gem text-[9px] text-purple-400"></i> PREMIUM</span>';
+      }
+      return '<span class="px-2 py-0.5 rounded-lg text-[10px] font-mono uppercase font-bold bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 flex items-center gap-1 w-max"><i class="fa-solid fa-user text-[9px]"></i> STANDART</span>';
+    }
+
+    function renderKeysTable() {
+      const tbody = document.getElementById('keysTableBody');
+      tbody.innerHTML = '';
+
+      const totalCount = allKeys.length;
+      const activeCount = allKeys.filter(k => k.active && !k.isExpired).length;
+      const revokedCount = allKeys.filter(k => !k.active || k.isExpired).length;
+
+      document.getElementById('badgeKeyAll').innerText = totalCount;
+      document.getElementById('badgeKeyActive').innerText = activeCount;
+      document.getElementById('badgeKeyRevoked').innerText = revokedCount;
+
+      document.getElementById('statActiveKeys').innerText = activeCount;
+      document.getElementById('statRevokedKeys').innerText = revokedCount;
+
+      let filtered = allKeys;
+      if (currentKeyCategory === 'active') {
+        filtered = allKeys.filter(k => k.active && !k.isExpired);
+      } else if (currentKeyCategory === 'revoked') {
+        filtered = allKeys.filter(k => !k.active || k.isExpired);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-zinc-500">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-folder-open text-2xl text-zinc-600"></i>
+                <span>Bu kategoride henüz anahtar bulunmuyor.</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(k => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-zinc-900/40 transition';
+        const expText = k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : 'Sınırsız (Lifetime)';
+        
+        let statusBadge = '';
+        if (k.active && !k.isExpired) {
+          statusBadge = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5 w-max"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Aktif</span>';
+        } else if (!k.active) {
+          statusBadge = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1.5 w-max">✕ İptal Edildi</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1.5 w-max">⏱️ Süresi Bitti</span>';
+        }
+
+        const roleBadge = getRoleBadgeHtml(k.role);
+
+        // Actions: Copy + Settings Gear Icon + Revoke/Reactivate + Direct Delete Button (Sistemde Kalmasın)
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono font-bold text-emerald-400 select-all">${k.key}</td>
+          <td class="py-3 px-3 text-zinc-300 font-medium">
+            <span id="label_${k.key}">${k.label || '-'}</span>
+          </td>
+          <td class="py-3 px-3">${roleBadge}</td>
+          <td class="py-3 px-3 text-zinc-400 font-mono">${expText}</td>
+          <td class="py-3 px-3 font-mono font-bold text-zinc-200">${k.useCount || 0}</td>
+          <td class="py-3 px-3">${statusBadge}</td>
+          <td class="py-3 px-3 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <!-- Kopyala -->
+              <button onclick="copyToClipboard('${k.key}', this)" class="px-2 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs transition border border-zinc-800 hover:border-zinc-700 cursor-pointer" title="Key Kopyala">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+
+              <!-- ⚙️ Yetki & Özellik Ayarları Simgesi -->
+              <button onclick="openKeySettingsModal('${k.key}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:border-indigo-500/50 text-xs font-semibold transition cursor-pointer flex items-center gap-1" title="Yetki, Rol & Özellik Ayarları">
+                <i class="fa-solid fa-gear text-indigo-400"></i>
+                <span class="hidden sm:inline">Ayar</span>
+              </button>
+
+              <!-- İptal / Aktifleştir -->
+              ${k.active ? `
+                <button onclick="confirmRevokeKey('${k.key}')" class="px-2 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs transition cursor-pointer" title="Erişimi Durdur (İptal)">
+                  İptal
+                </button>
+              ` : `
+                <button onclick="confirmReactivateKey('${k.key}')" class="px-2 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition cursor-pointer" title="Tekrar Aktif Et">
+                  Aktif
+                </button>
+              `}
+
+              <!-- 🗑️ Kalıcı Olarak Sil Tuşu (Sistemde Kalmasın) -->
+              <button onclick="confirmDeleteKey('${k.key}')" class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-400 border border-rose-500/30 text-xs transition cursor-pointer flex items-center gap-1" title="Kalıcı Olarak Sil (Sistemden Kaldır)">
+                <i class="fa-solid fa-trash-can"></i>
+                <span class="hidden sm:inline">Sil</span>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Create Key (With Role/Plan Selection)
+    async function createKey() {
+      const label = document.getElementById('keyLabelInput').value.trim() || 'Müşteri Key';
+      const role = document.getElementById('keyRoleSelect').value || 'user';
+      const days = document.getElementById('keyDurationSelect').value;
+
+      const btn = document.getElementById('btnCreateKey');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/generate-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({ 
+            label, 
+            expiresDays: days, 
+            role,
+            features: { canLookup: true, canCheckStores: true },
+            rateLimit: role === 'admin' ? 0 : (role === 'premium' ? 120 : 30)
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.key) {
+          navigator.clipboard.writeText(data.key.key);
+          document.getElementById('keyLabelInput').value = '';
+          await loadKeysList();
+
+          const roleName = role === 'admin' ? '👑 Admin' : (role === 'premium' ? '⭐ Premium VIP' : '👤 Standart');
+          showToast({
+            title: `Yeni ${roleName} Key Üretildi`,
+            message: `"${data.key.label}" yetkilendirildi ve panoya kopyalandı.`,
+            type: 'success',
+            keyToCopy: data.key.key
+          });
+        }
+      } catch (e) {
+        showToast({ title: 'Hata', message: 'Key üretilemedi.', type: 'error' });
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // =========================================================================
+    // KEY SETTINGS & PERMISSIONS MODAL LOGIC (⚙️ AYARLAR SİMGESİ İŞLEVİ)
+    // =========================================================================
+    let currentEditingKeyObj = null;
+
+    function openKeySettingsModal(keyString) {
+      const keyObj = allKeys.find(k => k.key === keyString);
+      if (!keyObj) return;
+
+      currentEditingKeyObj = keyObj;
+
+      document.getElementById('editKeyString').value = keyObj.key;
+      document.getElementById('modalKeySubtitle').innerText = keyObj.key;
+      document.getElementById('editKeyLabel').value = keyObj.label || '';
+
+      // Set Role radio
+      const role = keyObj.role || 'user';
+      document.getElementById('roleRadioUser').checked = (role === 'user');
+      document.getElementById('roleRadioPremium').checked = (role === 'premium');
+      document.getElementById('roleRadioAdmin').checked = (role === 'admin');
+
+      // Set Features Checkboxes
+      const features = keyObj.features || { canLookup: true, canCheckStores: true };
+      document.getElementById('editFeatureLookup').checked = features.canLookup !== false;
+      document.getElementById('editFeatureStores').checked = features.canCheckStores !== false;
+
+      // Rate limit
+      const rl = keyObj.rateLimit !== undefined ? keyObj.rateLimit : (role === 'admin' ? 0 : (role === 'premium' ? 120 : 30));
+      document.getElementById('editRateLimit').value = String(rl);
+
+      // Max uses
+      document.getElementById('editMaxUses').value = keyObj.maxUses || '';
+
+      // Expiry display
+      document.getElementById('editExpireExtend').value = 'keep';
+      const expDateText = keyObj.expiresAt ? new Date(keyObj.expiresAt).toLocaleDateString() : 'Sınırsız (Lifetime)';
+      document.getElementById('editCurrentExpiryText').innerText = `Mevcut Bitiş: ${expDateText}`;
+
+      // Active status
+      document.getElementById('editKeyActiveToggle').checked = Boolean(keyObj.active);
+
+      document.getElementById('keySettingsModal').classList.remove('hidden');
+    }
+
+    function closeKeySettingsModal() {
+      document.getElementById('keySettingsModal').classList.add('hidden');
+      currentEditingKeyObj = null;
+    }
+
+    function onRoleSelectChange(selectedRole) {
+      if (selectedRole === 'admin') {
+        document.getElementById('editRateLimit').value = '0';
+        document.getElementById('editFeatureLookup').checked = true;
+        document.getElementById('editFeatureStores').checked = true;
+      } else if (selectedRole === 'premium') {
+        document.getElementById('editRateLimit').value = '120';
+        document.getElementById('editFeatureLookup').checked = true;
+        document.getElementById('editFeatureStores').checked = true;
+      } else {
+        document.getElementById('editRateLimit').value = '30';
+      }
+    }
+
+    async function saveKeySettings(e) {
+      if (e) e.preventDefault();
+      if (!currentEditingKeyObj) return;
+
+      const key = document.getElementById('editKeyString').value;
+      const label = document.getElementById('editKeyLabel').value.trim();
+      
+      let role = 'user';
+      if (document.getElementById('roleRadioPremium').checked) role = 'premium';
+      if (document.getElementById('roleRadioAdmin').checked) role = 'admin';
+
+      const canLookup = document.getElementById('editFeatureLookup').checked;
+      const canCheckStores = document.getElementById('editFeatureStores').checked;
+      const rateLimit = Number(document.getElementById('editRateLimit').value);
+      const maxUsesVal = document.getElementById('editMaxUses').value;
+      const maxUses = maxUsesVal ? Number(maxUsesVal) : null;
+      const active = document.getElementById('editKeyActiveToggle').checked;
+
+      // Handle expiry change
+      const extendVal = document.getElementById('editExpireExtend').value;
+      let newExpiresAt = currentEditingKeyObj.expiresAt;
+
+      if (extendVal === 'lifetime') {
+        newExpiresAt = null;
+      } else if (extendVal !== 'keep') {
+        const daysToAdd = Number(extendVal);
+        const baseDate = currentEditingKeyObj.expiresAt ? new Date(currentEditingKeyObj.expiresAt) : new Date();
+        const effectiveBase = baseDate > new Date() ? baseDate : new Date();
+        effectiveBase.setDate(effectiveBase.getDate() + daysToAdd);
+        newExpiresAt = effectiveBase.toISOString();
+      }
+
+      const btn = document.getElementById('btnSaveKeySettings');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/update-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({
+            key,
+            role,
+            label,
+            active,
+            maxUses,
+            expiresAt: newExpiresAt,
+            rateLimit,
+            features: { canLookup, canCheckStores }
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeKeySettingsModal();
+          await loadKeysList();
+          await loadUsersAndQueries();
+          showToast({
+            title: 'Ayarlar Kaydedildi',
+            message: `"${label}" için yetkiler, üyelik rolü ve özellikler güncellendi.`,
+            type: 'success'
+          });
+        } else {
+          showToast({ title: 'Hata', message: data.error || 'Ayarlar kaydedilemedi.', type: 'error' });
+        }
+      } catch (err) {
+        showToast({ title: 'Hata', message: 'Bağlantı hatası.', type: 'error' });
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function deleteKeyFromModal() {
+      if (!currentEditingKeyObj) return;
+      const keyToDelete = currentEditingKeyObj.key;
+      closeKeySettingsModal();
+      confirmDeleteKey(keyToDelete);
+    }
+
+    // Revoke
+    function confirmRevokeKey(key) {
+      showConfirmModal({
+        title: 'Key İptal Edilsin mi?',
+        message: `${key} anahtarını devre dışı bırakmak istediğinize emin misiniz? Bu kullanıcı erişim sağlayamayacaktır.`,
+        isDanger: true,
+        onConfirm: () => revokeKey(key)
+      });
+    }
+
+    async function revokeKey(key) {
+      try {
+        await fetch('/api/admin/revoke-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({ key })
+        });
+        await loadKeysList();
+        await loadUsersAndQueries();
+        showToast({ title: 'Key İptal Edildi', message: 'Anahtar başarıyla devre dışı bırakıldı.', type: 'info' });
+      } catch (e) {}
+    }
+
+    // Reactivate
+    function confirmReactivateKey(key) {
+      showConfirmModal({
+        title: 'Key Tekrar Aktifleştirilsin mi?',
+        message: `${key} anahtarını yeniden aktif hale getirmek ve sorgu yetkisi vermek istediğinize emin misiniz?`,
+        isDanger: false,
+        onConfirm: () => reactivateKey(key)
+      });
+    }
+
+    async function reactivateKey(key) {
+      try {
+        const res = await fetch('/api/admin/reactivate-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({ key })
+        });
+        const data = await res.json();
+        if (data.success) {
+          await loadKeysList();
+          await loadUsersAndQueries();
+          showToast({ title: 'Key Aktifleştirildi', message: 'Anahtar başarıyla aktif hale getirildi.', type: 'success' });
+        }
+      } catch (e) {}
+    }
+
+    // Permanent Delete (Sistemde Kalmasın)
+    function confirmDeleteKey(key) {
+      showConfirmModal({
+        title: 'Key Kalıcı Olarak Silinsin mi?',
+        message: `${key} anahtarı veri tabanından ve sistemden kalıcı olarak silinecektir. Sistemde kesinlikle izi kalmaz.`,
+        isDanger: true,
+        onConfirm: () => deleteKey(key)
+      });
+    }
+
+    async function deleteKey(key) {
+      try {
+        const res = await fetch('/api/admin/delete-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({ key })
+        });
+        const data = await res.json();
+        if (data.success) {
+          await loadKeysList();
+          await loadUsersAndQueries();
+          showToast({ title: 'Key Kalıcı Olarak Silindi', message: 'Anahtar sistemden ve veri tabanından tamamen kaldırıldı.', type: 'info' });
+        }
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // ACTIVITY & QUERIES MANAGEMENT (Aktif vs İptal Ayrımı & Görünümler)
+    // =========================================================================
+    async function loadUsersAndQueries() {
+      try {
+        const [usersRes, queriesRes] = await Promise.all([
+          fetch('/api/admin/users', { headers: { 'Authorization': 'Bearer ' + adminToken } }),
+          fetch('/api/admin/all-queries', { headers: { 'Authorization': 'Bearer ' + adminToken } })
+        ]);
+        
+        const usersData = await usersRes.json();
+        const queriesData = await queriesRes.json();
+
+        if (usersData.success && Array.isArray(usersData.users)) {
+          allUsers = usersData.users;
+        }
+        if (queriesData.success && Array.isArray(queriesData.queries)) {
+          allQueries = queriesData.queries;
+        }
+
+        renderActivitySection();
+      } catch (e) {}
+    }
+
+    function setActivityCategory(cat) {
+      currentActivityCategory = cat;
+
+      const tabAll = document.getElementById('actTabAll');
+      const tabActive = document.getElementById('actTabActive');
+      const tabRevoked = document.getElementById('actTabRevoked');
+
+      const inactiveClass = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:border-zinc-700';
+
+      tabAll.className = inactiveClass;
+      tabActive.className = inactiveClass;
+      tabRevoked.className = inactiveClass;
+
+      if (cat === 'all') {
+        tabAll.className = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-indigo-500/15 text-indigo-300 border-indigo-500/40 shadow-sm';
+      } else if (cat === 'active') {
+        tabActive.className = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-sm';
+      } else if (cat === 'revoked') {
+        tabRevoked.className = 'px-3.5 py-1.5 rounded-xl font-medium text-xs border transition flex items-center gap-2 cursor-pointer bg-rose-500/15 text-rose-300 border-rose-500/40 shadow-sm';
+      }
+
+      renderActivitySection();
+    }
+
+    function setActivityView(view) {
+      currentActivityView = view;
+      const btnUsers = document.getElementById('viewBtnUsers');
+      const btnStream = document.getElementById('viewBtnStream');
+      const usersView = document.getElementById('usersTableView');
+      const streamView = document.getElementById('streamCardsView');
+
+      if (view === 'users') {
+        btnUsers.className = 'px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer bg-zinc-800 text-white shadow';
+        btnStream.className = 'px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200';
+        usersView.classList.remove('hidden');
+        streamView.classList.add('hidden');
+      } else {
+        btnStream.className = 'px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer bg-zinc-800 text-white shadow';
+        btnUsers.className = 'px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 cursor-pointer text-zinc-400 hover:text-zinc-200';
+        streamView.classList.remove('hidden');
+        usersView.classList.add('hidden');
+      }
+
+      renderActivitySection();
+    }
+
+    function renderActivitySection() {
+      const totalQ = allQueries.length;
+      const activeQ = allQueries.filter(q => q.isKeyActive).length;
+      const revokedQ = allQueries.filter(q => !q.isKeyActive).length;
+
+      document.getElementById('badgeActAll').innerText = totalQ;
+      document.getElementById('badgeActActive').innerText = activeQ;
+      document.getElementById('badgeActRevoked').innerText = revokedQ;
+
+      renderUsersTable();
+      renderStreamCards();
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '';
+
+      let filtered = allUsers;
+      if (currentActivityCategory === 'active') {
+        filtered = allUsers.filter(u => u.isKeyActive);
+      } else if (currentActivityCategory === 'revoked') {
+        filtered = allUsers.filter(u => !u.isKeyActive);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-zinc-500">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-users-slash text-2xl text-zinc-600"></i>
+                <span>Bu kategoride kullanıcı etkinliği bulunmuyor.</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-zinc-900/40 transition';
+
+        let lastTrackHtml = '<span class="text-zinc-600">--</span>';
+        if (u.lastTrack && u.lastTrack.name && u.lastTrack.name !== 'Bilinmeyen Şarkı') {
+          lastTrackHtml = `
+            <div class="flex items-center gap-2">
+              ${u.lastTrack.coverUrl ? `<img src="${u.lastTrack.coverUrl}" class="w-6 h-6 rounded object-cover shadow" />` : ''}
+              <span class="text-zinc-200 font-semibold truncate max-w-[150px]">${u.lastTrack.name}</span>
+              <span class="text-zinc-500 text-[10px] truncate max-w-[100px]">(${u.lastTrack.artist})</span>
+            </div>
+          `;
+        }
+
+        const roleBadge = getRoleBadgeHtml(u.keyRole || 'user');
+
+        let keyStatusBadge = '';
+        if (u.isKeyActive) {
+          keyStatusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 w-max"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Aktif</span>';
+        } else if (u.keyStatus === 'expired') {
+          keyStatusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 w-max">⏱️ Süresi Doldu</span>';
+        } else {
+          keyStatusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1 w-max">✕ İptal Edildi</span>';
+        }
+
+        const activeDate = new Date(u.lastActive);
+        const timeFormatted = activeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + activeDate.toLocaleDateString();
+
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono font-bold text-indigo-300">
+            <i class="fa-solid fa-laptop text-zinc-500 mr-1 text-[10px]"></i> ${u.ip}
+          </td>
+          <td class="py-3 px-3">
+            <span class="font-mono text-emerald-400 font-semibold">${u.key}</span>
+            <span class="text-zinc-500 text-[10px] block">${u.keyLabel}</span>
+          </td>
+          <td class="py-3 px-3">
+            <div class="flex items-center gap-1.5">
+              ${roleBadge}
+              ${keyStatusBadge}
+            </div>
+          </td>
+          <td class="py-3 px-3 font-mono font-black text-amber-400">${u.totalQueries}</td>
+          <td class="py-3 px-3">${lastTrackHtml}</td>
+          <td class="py-3 px-3 text-zinc-400 font-mono text-[11px]">${timeFormatted}</td>
+          <td class="py-3 px-3 text-right">
+            <button
+              onclick="openActivityDrawer('${u.ip}', '${u.fullKey}', '${u.keyLabel}', '${u.keyStatus}', ${u.isKeyActive}, '${u.keyRole || 'user'}')"
+              class="px-3 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-semibold transition flex items-center gap-1.5 ml-auto cursor-pointer"
+            >
+              <i class="fa-solid fa-list-check text-[10px]"></i>
+              <span>Sorguları Gör</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderStreamCards() {
+      const container = document.getElementById('streamCardsList');
+      container.innerHTML = '';
+
+      let filtered = allQueries;
+      if (currentActivityCategory === 'active') {
+        filtered = allQueries.filter(q => q.isKeyActive);
+      } else if (currentActivityCategory === 'revoked') {
+        filtered = allQueries.filter(q => !q.isKeyActive);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-10 text-zinc-500">
+            <i class="fa-solid fa-music text-3xl mb-2 text-zinc-700 block"></i>
+            <span>Bu kategoride henüz şarkı sorgu kaydı yok.</span>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 transition flex items-center gap-3.5';
+
+        const coverImg = q.coverUrl ? q.coverUrl : 'https://via.placeholder.com/60?text=Cover';
+        const qTime = new Date(q.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date(q.timestamp).toLocaleDateString();
+
+        const roleBadge = getRoleBadgeHtml(q.keyRole || 'user');
+
+        let statusTag = '';
+        if (q.isKeyActive) {
+          statusTag = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">● Aktif</span>';
+        } else if (q.keyStatus === 'expired') {
+          statusTag = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/20">⏱️ Süresi Doldu</span>';
+        } else {
+          statusTag = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20">✕ İptal</span>';
+        }
+
+        card.innerHTML = `
+          <img src="${coverImg}" class="w-14 h-14 rounded-lg object-cover shadow-md border border-zinc-800 shrink-0" alt="Cover" />
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="text-sm font-bold text-white truncate">${q.trackName}</h4>
+              <span class="text-[10px] font-mono text-zinc-500 shrink-0">${qTime}</span>
+            </div>
+            <p class="text-xs text-zinc-400 truncate mt-0.5">${q.artistName}</p>
+            <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 truncate">
+                ${q.distributor}
+              </span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono text-[10px] text-zinc-400"><i class="fa-solid fa-laptop text-[9px] mr-1"></i>${q.ip}</span>
+                ${roleBadge}
+                ${statusTag}
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Drawer Logic
+    async function openActivityDrawer(ip, fullKey, keyLabel, keyStatus, isKeyActive, keyRole = 'user') {
+      document.getElementById('drawerIpTitle').innerText = ip;
+      document.getElementById('drawerKeySub').innerText = (fullKey || 'Key Yok') + ' (' + (keyLabel || '-') + ')';
+      
+      const banner = document.getElementById('drawerStatusBanner');
+      const roleText = keyRole === 'admin' ? '👑 Yönetici (Admin)' : (keyRole === 'premium' ? '⭐ Premium VIP' : '👤 Standart Üye');
+      
+      if (isKeyActive) {
+        banner.innerHTML = `
+          <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
+            <span class="flex items-center gap-2 text-emerald-400 font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              ${roleText} - Aktif Key
+            </span>
+            <span class="text-zinc-400 font-mono text-[10px]">Sorgu Yetkisi Açık</span>
+          </div>
+        `;
+      } else if (keyStatus === 'expired') {
+        banner.innerHTML = `
+          <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs">
+            <span class="flex items-center gap-2 text-amber-400 font-bold">
+              <i class="fa-solid fa-clock text-amber-400"></i>
+              ${roleText} - Süresi Dolmuş
+            </span>
+            <span class="text-amber-300 font-mono text-[10px]">Erişim Bitti</span>
+          </div>
+        `;
+      } else {
+        banner.innerHTML = `
+          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-between text-xs">
+            <span class="flex items-center gap-2 text-rose-400 font-bold">
+              <i class="fa-solid fa-ban text-rose-400"></i>
+              ${roleText} - İptal Edilmiş Key
+            </span>
+            <span class="text-rose-300 font-mono text-[10px]">Erişim Engelli</span>
+          </div>
+        `;
+      }
+
+      const cardsList = document.getElementById('drawerCardsList');
+      cardsList.innerHTML = '<div class="text-center text-zinc-500 py-8"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Sorgular yükleniyor...</div>';
+
+      document.getElementById('drawerOverlay').classList.remove('hidden');
+      const drawer = document.getElementById('activityDrawer');
+      drawer.classList.remove('translate-x-full');
+
+      try {
+        const res = await fetch(`/api/admin/user-queries?ip=${encodeURIComponent(ip)}&key=${encodeURIComponent(fullKey)}`, {
+          headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.queries)) {
+          document.getElementById('drawerQueryCount').innerText = `${data.queries.length} Sorgu`;
+          cardsList.innerHTML = '';
+
+          if (data.queries.length === 0) {
+            cardsList.innerHTML = '<div class="text-center text-zinc-500 py-8">Henüz sorgu kaydı yok.</div>';
+            return;
+          }
+
+          data.queries.forEach(q => {
+            const card = document.createElement('div');
+            card.className = 'p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 transition flex items-center gap-3.5';
+
+            const coverImg = q.coverUrl ? q.coverUrl : 'https://via.placeholder.com/60?text=Cover';
+            const qTime = new Date(q.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date(q.timestamp).toLocaleDateString();
+
+            card.innerHTML = `
+              <img src="${coverImg}" class="w-12 h-12 rounded-lg object-cover shadow-md border border-zinc-800 shrink-0" alt="Cover" />
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2">
+                  <h4 class="text-sm font-bold text-white truncate">${q.trackName}</h4>
+                  <span class="text-[10px] font-mono text-zinc-500 shrink-0">${qTime}</span>
+                </div>
+                <p class="text-xs text-zinc-400 truncate mt-0.5">${q.artistName}</p>
+                <div class="mt-2 flex items-center justify-between gap-2">
+                  <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 truncate">
+                    ${q.distributor}
+                  </span>
+                  <span class="text-[10px] font-mono text-zinc-500 uppercase">${q.type === 'stores' ? '40 Mağaza' : 'Distribütör'}</span>
+                </div>
+              </div>
+            `;
+            cardsList.appendChild(card);
+          });
+        }
+      } catch (err) {
+        cardsList.innerHTML = '<div class="text-center text-rose-400 py-8">Sorgular yüklenirken hata oluştu.</div>';
+      }
+    }
+
+    function closeDrawer() {
+      document.getElementById('activityDrawer').classList.add('translate-x-full');
+      document.getElementById('drawerOverlay').classList.add('hidden');
+    }
+
+    // Password update
+    async function handleChangePassword(e) {
+      if (e) e.preventDefault();
+      const cur = document.getElementById('curPassInput').value;
+      const nw = document.getElementById('newPassInput').value;
+
+      const btn = document.getElementById('btnChangePass');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({ currentPassword: cur, newPassword: nw })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('curPassInput').value = '';
+          document.getElementById('newPassInput').value = '';
+          showToast({ title: 'Şifre Güncellendi', message: 'Yönetici şifreniz başarıyla değiştirildi.', type: 'success' });
+        } else {
+          showToast({ title: 'Hata', message: data.error || 'Şifre değiştirilemedi.', type: 'error' });
+        }
+      } catch (err) {
+        showToast({ title: 'Hata', message: 'Bağlantı hatası.', type: 'error' });
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function copyToClipboard(text, btnElement = null) {
+      navigator.clipboard.writeText(text);
+      if (btnElement) {
+        const originalHtml = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Kopyalandı';
+        setTimeout(() => {
+          btnElement.innerHTML = originalHtml;
+        }, 1500);
+      }
+      showToast({ title: 'Panoya Kopyalandı', message: text, type: 'info' });
+    }
+
+    // Boot
+    window.addEventListener('DOMContentLoaded', () => {
+      if (adminToken) {
+        unlockAdminDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DistroRadar Pro — Precision Music Distribution Intelligence</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #07090e;
+      color: #e4e4e7;
+      min-height: 100vh;
+    }
+    .ambient-glow {
+      background: radial-gradient(circle at 18% 45%, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0.04) 35%, transparent 65%);
+    }
+    .card-glow-emerald {
+      box-shadow: 0 0 50px -10px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(16, 185, 129, 0.2);
+    }
+    .sound-wave-bar {
+      animation: soundWave 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes soundWave {
+      0% { height: 4px; }
+      100% { height: 16px; }
+    }
+    .sound-wave-bar:nth-child(2) { animation-delay: 0.2s; }
+    .sound-wave-bar:nth-child(3) { animation-delay: 0.4s; }
+    .sound-wave-bar:nth-child(4) { animation-delay: 0.1s; }
+    .sound-wave-bar:nth-child(5) { animation-delay: 0.5s; }
+    .sound-wave-bar:nth-child(6) { animation-delay: 0.3s; }
+
+    .glass-card {
+      background: rgba(12, 15, 23, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-input {
+      background: rgba(8, 10, 16, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .shake {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+      40%, 60% { transform: translate3d(3px, 0, 0); }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-emerald-500 selection:text-black">
+
+  <!-- ========================================================================= -->
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER (Zero browser alerts)               -->
+  <!-- ========================================================================= -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- ========================================================================= -->
+  <!-- FULL-SCREEN LOADING / SPLASH TRANSITION SCREEN                            -->
+  <!-- ========================================================================= -->
+  <div id="userLoader" class="hidden fixed inset-0 z-50 bg-[#07090e] flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+    <div class="relative flex items-center justify-center mb-6">
+      <div class="w-20 h-20 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin"></div>
+      <div class="absolute w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+        <i class="fa-solid fa-radar text-lg animate-pulse"></i>
+      </div>
+    </div>
+    <h3 id="userLoaderTitle" class="text-lg font-bold text-white tracking-wide">Katalog Kimliği Doğrulanıyor...</h3>
+    <p id="userLoaderSub" class="text-xs text-zinc-400 mt-1 font-mono">Erişim anahtarı taranıyor ve yetki açılıyor</p>
+    <div class="w-48 bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-5">
+      <div id="userLoaderProgress" class="bg-emerald-400 h-full transition-all duration-700" style="width: 25%"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. KEY LOGIN GATE VIEW (Original, Sleek Cyber Emerald)                    -->
+  <!-- ========================================================================= -->
+  <div id="loginGate" class="min-h-screen ambient-glow flex items-center justify-center p-4 sm:p-8 lg:p-16 relative">
+    
+    <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:32px_32px]"></div>
+
+    <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center relative z-10">
+      
+      <!-- LEFT HERO SECTION -->
+      <div class="lg:col-span-7 space-y-8">
+        
+        <div class="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/30 text-emerald-400 text-[11px] font-mono font-semibold tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>CATALOG INTELLIGENCE</span>
+          <div class="flex items-center gap-0.5 ml-2 h-4">
+            <span class="w-0.5 bg-emerald-400 rounded-full sound-wave-bar"></span>
+            <span class="w-0.5 bg-emerald-400 rounded-full sound-wave-bar"></span>
+            <span class="w-0.5 bg-emerald-400 rounded-full sound-wave-bar"></span>
+            <span class="w-0.5 bg-emerald-400 rounded-full sound-wave-bar"></span>
+            <span class="w-0.5 bg-emerald-400 rounded-full sound-wave-bar"></span>
+            <span class="w-0.5 bg-emerald-400 rounded-full sound-wave-bar"></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="w-20 h-20 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_35px_rgba(16,185,129,0.35)] transition transform hover:scale-105">
+            <i class="fa-brands fa-spotify text-emerald-400 text-5xl"></i>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08]">
+            Precision Music<br /><span class="text-emerald-400">Distribution Radar.</span>
+          </h1>
+          <p class="text-zinc-400 text-sm sm:text-base max-w-lg font-normal leading-relaxed">
+            Unmask digital distributors, official record labels, and live catalog availability across 40 streaming platforms in real-time.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 text-[10px] font-mono text-emerald-400/80 tracking-widest uppercase">
+          <span>ISRC</span> • <span>LABEL</span> • <span>DISTRIBUTOR</span> • <span>METADATA</span> • <span>40 PLATFORMS</span>
+        </div>
+
+        <div class="pt-6 border-t border-zinc-800/60 flex items-center gap-2 text-xs font-mono text-zinc-500">
+          <span class="text-emerald-500 font-bold">((•))</span>
+          <span class="text-zinc-300 font-bold tracking-widest">DistroRadar Pro</span>
+        </div>
+
+      </div>
+
+      <!-- RIGHT ACCESS CARD -->
+      <div class="lg:col-span-5">
+        <div id="loginCardBox" class="p-7 sm:p-9 rounded-3xl bg-[#0c0f17]/90 border border-emerald-500/30 backdrop-blur-2xl card-glow-emerald relative overflow-hidden transition">
+          
+          <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+
+          <div class="mb-6">
+            <span class="text-[11px] font-mono tracking-widest text-emerald-400 uppercase font-bold block mb-1">
+              SECURE ACCESS
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Sign in with your access key
+            </h2>
+          </div>
+
+          <form id="keyAuthForm" onsubmit="handleKeySubmit(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-mono text-emerald-400 font-semibold mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-key"></i> ACCESS KEY
+              </label>
+              <input
+                id="accessKeyInput"
+                type="text"
+                placeholder="dfinder_..."
+                autocomplete="off"
+                spellcheck="false"
+                class="w-full px-4 py-3.5 rounded-xl bg-[#080a10] border border-zinc-800 text-white font-mono text-sm placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-inner"
+                required
+              />
+              <p class="text-[11px] text-zinc-500 mt-2 leading-relaxed">
+                Lütfen yöneticinizden aldığınız erişim anahtarını giriniz.
+              </p>
+            </div>
+
+            <div id="loginErrorBox" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-center gap-2">
+              <i class="fa-solid fa-circle-exclamation text-rose-400"></i>
+              <span id="loginErrorMessage">Geçersiz veya süresi dolmuş anahtar.</span>
+            </div>
+
+            <button
+              type="submit"
+              id="signInKeyBtn"
+              class="w-full py-3.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-zinc-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(16,185,129,0.35)] cursor-pointer"
+            >
+              <i id="keyBtnIcon" class="fa-solid fa-key"></i>
+              <i id="keyBtnSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+              <span id="keyBtnText">Panele Giriş Yap</span>
+            </button>
+          </form>
+
+          <div class="mt-8 text-center text-[11px] text-zinc-600 font-mono">
+            DistroRadar Pro • All rights reserved © 2026
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN APPLICATION DASHBOARD (Unlocked after key verification)          -->
+  <!-- ========================================================================= -->
+  <div id="appDashboard" class="hidden min-h-screen flex flex-col justify-between">
+    
+    <!-- Top Global Header -->
+    <header class="border-b border-zinc-800/80 bg-[#07090e]/95 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5">
+      <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        
+        <!-- Left: Logo & Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            <i class="fa-brands fa-spotify"></i>
+          </div>
+          <div>
+            <span class="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
+              <span>DistroRadar</span>
+              <span class="text-emerald-400 font-mono text-xs">PRO</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Center / Right Controls -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Key Badge -->
+          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono">
+            <i class="fa-solid fa-key text-emerald-400 text-[10px]"></i>
+            <span id="headerKeyDisplay" class="text-zinc-300">dfinder_...</span>
+          </div>
+
+          <!-- Language Switcher -->
+          <button
+            onclick="toggleLanguage()"
+            id="langBtn"
+            class="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-mono font-bold transition"
+            title="Switch Language (EN / TR)"
+          >
+            🌐 EN
+          </button>
+
+          <!-- Sign Out Button -->
+          <button
+            onclick="handleSignOut()"
+            class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 border border-zinc-800 hover:border-rose-500/30 text-xs font-medium transition flex items-center gap-1.5"
+            title="Çıkış Yap"
+          >
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span class="hidden sm:inline">Çıkış</span>
+          </button>
+
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
+
+      <!-- Top Navigation Tabs -->
+      <div class="flex justify-center mb-8">
+        <div class="inline-flex p-1.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 shadow-2xl">
+          <button
+            id="tabBtnDistro"
+            onclick="switchTab('distro')"
+            class="px-5 sm:px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/20"
+          >
+            <i class="fa-solid fa-radar"></i>
+            <span data-i18n="tabDistro">Distribütör Radarı</span>
+          </button>
+          <button
+            id="tabBtnStores"
+            onclick="switchTab('stores')"
+            class="px-5 sm:px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+          >
+            <i class="fa-solid fa-store text-indigo-400"></i>
+            <span data-i18n="tabStores">Mağaza Denetleme</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold">40 Platform</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 1: DISTRIBUTOR FINDER VIEW             -->
+      <!-- ========================================== -->
+      <div id="distroView" class="space-y-8">
+        
+        <!-- Search Box -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 shadow-2xl card-glow-emerald">
+          <div class="flex items-center gap-2 mb-3 text-xs text-emerald-400 font-semibold uppercase tracking-wider">
+            <i class="fa-solid fa-bolt"></i> <span data-i18n="searchHeader">Spotify & YouTube Distribütör Sorgulama</span>
+          </div>
+          <form id="searchForm" onsubmit="handleDistroSearch(event)" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                <i class="fa-brands fa-spotify text-xl text-emerald-500"></i>
+              </div>
+              <input
+                id="urlInput"
+                type="text"
+                placeholder="Spotify veya YouTube şarkı / albüm linki (örn: open.spotify.com/track/...)"
+                class="w-full pl-12 pr-4 py-3.5 glass-input rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm sm:text-base font-normal transition"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              id="submitBtn"
+              class="px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-zinc-950 font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
+            >
+              <span id="btnText" data-i18n="findDistroBtn">Distribütörü Bul</span>
+              <i id="btnSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+            </button>
+          </form>
+
+          <!-- Global Quick samples (Drake, XXXTENTACION, The Weeknd, Frank Ocean) -->
+          <div class="mt-4 pt-4 border-t border-zinc-800/80 flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-zinc-500 font-medium" data-i18n="quickSamples">Hızlı Örnekler:</span>
+            <button onclick="setQuery('https://open.spotify.com/track/2G7V7zsVDxg1yRsu7Ew9RJ')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">Drake - In My Feelings</button>
+            <button onclick="setQuery('https://open.spotify.com/track/3ee8Jmje8o58CHK66QrVC2')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">XXXTENTACION - SAD!</button>
+            <button onclick="setQuery('https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">The Weeknd - Blinding Lights</button>
+            <button onclick="setQuery('https://open.spotify.com/track/7eqoqGkKwgOaWNNHx90uEZ')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">Frank Ocean - Nights (Stem)</button>
+          </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="errorBox" class="hidden p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-start gap-3">
+          <i class="fa-solid fa-circle-exclamation text-rose-400 mt-0.5 text-base"></i>
+          <div id="errorMessage">Hata mesajı</div>
+        </div>
+
+        <!-- Track Result Card -->
+        <div id="resultCard" class="hidden glass-card rounded-2xl p-6 shadow-2xl border border-zinc-700/50">
+          <div class="flex flex-col md:flex-row gap-6 items-start">
+            <!-- Cover Art -->
+            <div class="relative group mx-auto md:mx-0 shrink-0">
+              <img id="coverImg" src="" alt="Album Cover" class="w-48 h-48 rounded-xl object-cover shadow-xl border border-zinc-800" />
+              <a id="spotifyLink" href="#" target="_blank" class="absolute bottom-2 right-2 p-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 rounded-full shadow-lg transition">
+                <i class="fa-brands fa-spotify text-lg"></i>
+              </a>
+            </div>
+
+            <!-- Track & Distro Info -->
+            <div class="flex-1 w-full space-y-4">
+              <div>
+                <span id="badgeType" class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-mono tracking-wider bg-zinc-800 text-zinc-400 mb-1">SPOTIFY TRACK</span>
+                <h2 id="trackTitle" class="text-2xl font-bold text-white tracking-tight">Şarkı Adı</h2>
+                <p id="artistNames" class="text-zinc-400 text-sm font-medium mt-0.5">Sanatçılar</p>
+              </div>
+
+              <!-- Distributor Highlight Banner -->
+              <div id="distroBanner" class="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-zinc-900/60 to-zinc-900/40 border border-emerald-500/30 flex items-center justify-between">
+                <div>
+                  <span id="distroStatusLabel" class="text-xs uppercase font-mono tracking-wider text-emerald-400 font-semibold" data-i18n="verifiedDistro">Doğrulanmış Dağıtıcı</span>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <h3 id="distroName" class="text-2xl sm:text-3xl font-black text-emerald-300 tracking-wide">Dağıtıcı Adı</h3>
+                    <span id="distroLabelTag" class="hidden px-2 py-0.5 text-xs rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                      <i class="fa-solid fa-tag text-[10px] mr-1 text-zinc-400"></i><span id="distroLabelText"></span>
+                    </span>
+                  </div>
+                  <p id="distroSubtext" class="text-xs text-zinc-400 mt-1 hidden"></p>
+                </div>
+                <div id="distroIconBox" class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-2xl border border-emerald-500/20 shrink-0">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+              </div>
+
+              <!-- Details Grid (Clean: NO RAW HASH BOX) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
+                  <span class="text-zinc-500 block font-mono">ISRC Kodu</span>
+                  <div class="flex items-center justify-between mt-1">
+                    <code id="isrcCode" class="font-mono text-zinc-300 select-all font-semibold">--</code>
+                    <button onclick="copyText('isrcCode')" class="text-zinc-500 hover:text-emerald-400 transition" title="Kopyala">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
+                  <span class="text-zinc-500 block font-mono">Etiket (Plak Şirketi)</span>
+                  <p id="labelName" class="text-zinc-300 font-semibold mt-1 truncate">--</p>
+                </div>
+
+                <div class="p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
+                  <span class="text-zinc-500 block font-mono">Spotify Dinlenme Sayısı</span>
+                  <p id="playcount" class="text-emerald-400 font-bold text-sm mt-1">--</p>
+                </div>
+
+                <div class="p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
+                  <span class="text-zinc-500 block font-mono">Kataloğa Yüklenme Tarihi</span>
+                  <p id="catalogDate" class="text-zinc-300 font-mono mt-1">--</p>
+                </div>
+              </div>
+
+              <!-- Shortcut button to switch to 40-Store Checker for this track -->
+              <button
+                onclick="switchToStoreCheckerForCurrentTrack()"
+                class="w-full mt-2 py-3 px-4 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <i class="fa-solid fa-store text-indigo-400"></i>
+                <span data-i18n="checkStoresShortcut">Bu Parçanın 40 Mağazadaki Dağıtımını Denetle ➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Album Results Container -->
+        <div id="albumContainer" class="hidden glass-card rounded-2xl p-6 shadow-2xl">
+          <div class="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-compact-disc text-emerald-400"></i> <span data-i18n="albumTracks">Albümdeki Parçalar</span>
+            </h3>
+            <span id="albumCountBadge" class="text-xs font-mono px-2.5 py-1 rounded bg-zinc-800 text-zinc-400">0 Parça</span>
+          </div>
+          <div id="albumTrackList" class="space-y-3"></div>
+        </div>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: STORE DISTRIBUTION CHECKER VIEW     -->
+      <!-- ========================================== -->
+      <div id="storesView" class="hidden space-y-8">
+        
+        <div class="glass-card rounded-2xl p-4 sm:p-6 shadow-2xl card-glow-emerald">
+          <div class="flex items-center gap-2 mb-3 text-xs text-indigo-400 font-semibold uppercase tracking-wider">
+            <i class="fa-solid fa-store"></i> <span data-i18n="storesHeader">40 Dijital Müzik Mağazası & Akış Platformu Denetimi</span>
+          </div>
+          <form id="storeSearchForm" onsubmit="handleStoreSearch(event)" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                <i class="fa-solid fa-link text-lg text-indigo-400"></i>
+              </div>
+              <input
+                id="storeUrlInput"
+                type="text"
+                placeholder="Spotify şarkı linki yapıştırın (örn: open.spotify.com/track/...)"
+                class="w-full pl-12 pr-4 py-3.5 glass-input rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm sm:text-base font-normal transition"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              id="storeSubmitBtn"
+              class="px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 cursor-pointer"
+            >
+              <span id="storeBtnText" data-i18n="checkStoresBtn">40 Mağazayı Canlı Denetle</span>
+              <i id="storeBtnSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+            </button>
+          </form>
+
+          <div class="mt-4 pt-4 border-t border-zinc-800/80 flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-zinc-500 font-medium" data-i18n="quickCheck">Hızlı Denetle:</span>
+            <button onclick="setStoreQuery('https://open.spotify.com/track/2G7V7zsVDxg1yRsu7Ew9RJ')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">Drake - In My Feelings</button>
+            <button onclick="setStoreQuery('https://open.spotify.com/track/3ee8Jmje8o58CHK66QrVC2')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">XXXTENTACION - SAD!</button>
+            <button onclick="setStoreQuery('https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b')" class="px-2.5 py-1 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 text-zinc-300 transition">The Weeknd - Blinding Lights</button>
+          </div>
+        </div>
+
+        <!-- Store Error Alert -->
+        <div id="storeErrorBox" class="hidden p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-start gap-3">
+          <i class="fa-solid fa-circle-exclamation text-rose-400 mt-0.5 text-base"></i>
+          <div id="storeErrorMessage">Hata mesajı</div>
+        </div>
+
+        <!-- Store Distribution Result Container -->
+        <div id="storeResultCard" class="hidden glass-card rounded-2xl p-6 shadow-2xl border border-zinc-700/50">
+          <div class="flex items-center gap-4 pb-5 border-b border-zinc-800">
+            <img id="storeTrackImg" src="" class="w-16 h-16 rounded-xl object-cover shadow-md border border-zinc-800 shrink-0" />
+            <div class="min-w-0 flex-1">
+              <h3 id="storeTrackTitle" class="text-xl font-bold text-white truncate">Şarkı Adı</h3>
+              <p id="storeTrackSubtitle" class="text-xs text-zinc-400 truncate mt-0.5">Sanatçılar</p>
+              <span id="storeTrackFooter" class="text-[11px] text-zinc-500 font-mono block mt-1">--</span>
+            </div>
+          </div>
+
+          <div class="mt-5 bg-zinc-900/60 p-4 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <span id="storeLiveCountBadge" class="text-2xl font-black text-indigo-400 font-mono">0 / 40</span>
+                <span class="text-xs text-zinc-300 font-medium" data-i18n="storesLiveText">Mağazada Dağıtımda</span>
+                <span id="storePercentBadge" class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-xs font-mono font-bold">%0</span>
+              </div>
+              <div class="w-48 sm:w-64 bg-zinc-800 h-2 rounded-full overflow-hidden mt-2.5">
+                <div id="storeProgressBar" class="bg-indigo-500 h-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 text-xs">
+              <button onclick="filterStores('all')" id="filterBtnAll" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-white font-semibold border border-zinc-700 transition cursor-pointer" data-i18n="filterAll">Tümü (40)</button>
+              <button onclick="filterStores('live')" id="filterBtnLive" class="px-3 py-1.5 rounded-lg bg-zinc-900 text-emerald-400 font-semibold hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition cursor-pointer" data-i18n="filterLive">✓ Yayında Olanlar</button>
+              <button onclick="filterStores('missing')" id="filterBtnMissing" class="px-3 py-1.5 rounded-lg bg-zinc-900 text-zinc-400 font-semibold hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition cursor-pointer" data-i18n="filterMissing">✕ Eksik Olanlar</button>
+            </div>
+          </div>
+
+          <div id="storesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 mt-5"></div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-800/60 py-6 text-center text-xs text-zinc-500 font-mono">
+      <span>DistroRadar Pro</span> • <span data-i18n="allRightsReserved">Tüm hakları saklıdır © 2026</span>
+    </footer>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 3. JAVASCRIPT LOGIC (Zero Native Alerts + Full Loading Screens)            -->
+  <!-- ========================================================================= -->
+  <script>
+    // Custom In-App Toast System
+    function showToast({ title, message, type = 'success' }) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const borderColor = type === 'success' ? 'border-emerald-500/40 shadow-emerald-500/10' : (type === 'error' ? 'border-rose-500/40 shadow-rose-500/10' : 'border-indigo-500/40 shadow-indigo-500/10');
+      const iconColor = type === 'success' ? 'text-emerald-400 fa-circle-check' : (type === 'error' ? 'text-rose-400 fa-circle-exclamation' : 'text-indigo-400 fa-circle-info');
+
+      toast.className = `pointer-events-auto bg-[#0c0f17]/95 border ${borderColor} rounded-2xl p-4 shadow-2xl backdrop-blur-xl flex items-start gap-3 transform transition-all duration-300 translate-y-2 opacity-0`;
+      toast.innerHTML = `
+        <i class="fa-solid ${iconColor} text-base mt-0.5"></i>
+        <div class="min-w-0 flex-1">
+          <h4 class="text-xs font-bold text-white tracking-wide">${title}</h4>
+          <p class="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">${message}</p>
+        </div>
+        <button onclick="this.closest('div.pointer-events-auto').remove()" class="text-zinc-500 hover:text-zinc-300 transition text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.add('opacity-0', 'translate-x-4');
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 4000);
+    }
+
+    // Full-Screen Loading Screen Logic
+    function showUserLoader(title, sub, progress = 40) {
+      document.getElementById('userLoaderTitle').innerText = title;
+      document.getElementById('userLoaderSub').innerText = sub;
+      document.getElementById('userLoaderProgress').style.width = progress + '%';
+      document.getElementById('userLoader').classList.remove('hidden');
+    }
+
+    function hideUserLoader() {
+      document.getElementById('userLoaderProgress').style.width = '100%';
+      setTimeout(() => {
+        document.getElementById('userLoader').classList.add('hidden');
+      }, 350);
+    }
+
+    // Internationalization (i18n)
+    let currentLang = localStorage.getItem('dfinder_lang') || 'en';
+    const translations = {
+      en: {
+        tabDistro: 'Distributor Radar',
+        tabStores: 'Store Checker',
+        searchHeader: 'Spotify & YouTube Distributor Intelligence',
+        findDistroBtn: 'Find Distributor',
+        quickSamples: 'Quick Samples:',
+        verifiedDistro: 'Verified Distributor',
+        checkStoresShortcut: 'Inspect Distribution on 40 Stores ➔',
+        albumTracks: 'Album Tracks',
+        storesHeader: '40 Digital Music Stores & Streaming Platforms',
+        checkStoresBtn: 'Inspect 40 Stores Live',
+        quickCheck: 'Quick Inspect:',
+        storesLiveText: 'Stores Live',
+        filterAll: 'All (40)',
+        filterLive: '✓ Live Stores',
+        filterMissing: '✕ Missing',
+        allRightsReserved: 'All rights reserved © 2026'
+      },
+      tr: {
+        tabDistro: 'Distribütör Radarı',
+        tabStores: 'Mağaza Denetleme',
+        searchHeader: 'Spotify & YouTube Distribütör Sorgulama',
+        findDistroBtn: 'Distribütörü Bul',
+        quickSamples: 'Hızlı Örnekler:',
+        verifiedDistro: 'Doğrulanmış Dağıtıcı',
+        checkStoresShortcut: 'Bu Parçanın 40 Mağazadaki Dağıtımını Denetle ➔',
+        albumTracks: 'Albümdeki Parçalar',
+        storesHeader: '40 Dijital Müzik Mağazası & Akış Platformu Denetimi',
+        checkStoresBtn: '40 Mağazayı Canlı Denetle',
+        quickCheck: 'Hızlı Denetle:',
+        storesLiveText: 'Mağazada Dağıtımda',
+        filterAll: 'Tümü (40)',
+        filterLive: '✓ Yayında Olanlar',
+        filterMissing: '✕ Eksik Olanlar',
+        allRightsReserved: 'Tüm hakları saklıdır © 2026'
+      }
+    };
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('dfinder_lang', lang);
+      document.getElementById('langBtn').innerText = lang === 'en' ? '🌐 EN' : '🌐 TR';
+      const dict = translations[lang] || translations.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerText = dict[key];
+      });
+    }
+
+    function toggleLanguage() {
+      applyLanguage(currentLang === 'en' ? 'tr' : 'en');
+      showToast({ title: 'Language', message: currentLang === 'en' ? 'Language switched to English' : 'Dil Türkçe olarak ayarlandı', type: 'info' });
+    }
+
+    // Auth State
+    let activeKey = localStorage.getItem('dfinder_key') || null;
+
+    async function verifyAndUnlockKey(key, silent = false) {
+      try {
+        const res = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        });
+        const data = await res.json();
+        if (data.valid) {
+          activeKey = key;
+          localStorage.setItem('dfinder_key', key);
+          
+          if (!silent) {
+            showUserLoader('Katalog Kimliği Doğrulanıyor...', 'Erişim anahtarı başarıyla onaylandı.', 70);
+            setTimeout(() => {
+              hideUserLoader();
+              showDashboard(data);
+              showToast({ title: 'Erişim Başarılı', message: 'Katalog istihbarat radarı açıldı.', type: 'success' });
+            }, 850);
+          } else {
+            showDashboard(data);
+          }
+          return true;
+        } else {
+          localStorage.removeItem('dfinder_key');
+          showLoginError(data.reason || 'Invalid access key.');
+          return false;
+        }
+      } catch (e) {
+        showLoginError('Connection error. Please try again.');
+        return false;
+      }
+    }
+
+    function showDashboard(userData) {
+      document.getElementById('loginGate').classList.add('hidden');
+      document.getElementById('appDashboard').classList.remove('hidden');
+
+      const maskedKey = activeKey.length > 18 ? activeKey.slice(0, 10) + '...' + activeKey.slice(-4) : activeKey;
+      document.getElementById('headerKeyDisplay').innerText = maskedKey;
+      applyLanguage(currentLang);
+    }
+
+    function showLoginError(msg) {
+      const box = document.getElementById('loginErrorBox');
+      document.getElementById('loginErrorMessage').innerText = msg;
+      box.classList.remove('hidden');
+
+      const card = document.getElementById('loginCardBox');
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 500);
+    }
+
+    async function handleKeySubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('accessKeyInput');
+      const key = input.value.trim();
+      if (!key) return;
+
+      const btn = document.getElementById('signInKeyBtn');
+      const icon = document.getElementById('keyBtnIcon');
+      const spinner = document.getElementById('keyBtnSpinner');
+      const text = document.getElementById('keyBtnText');
+
+      btn.disabled = true;
+      icon.classList.add('hidden');
+      spinner.classList.remove('hidden');
+      text.innerText = 'Doğrulanıyor...';
+
+      const ok = await verifyAndUnlockKey(key, false);
+
+      btn.disabled = false;
+      icon.classList.remove('hidden');
+      spinner.classList.add('hidden');
+      text.innerText = 'Panele Giriş Yap';
+    }
+
+    function handleSignOut() {
+      showUserLoader('Oturum Kapatılıyor...', 'Güvenlik anahtarı bellekten siliniyor...', 75);
+      setTimeout(() => {
+        localStorage.removeItem('dfinder_key');
+        activeKey = null;
+        document.getElementById('appDashboard').classList.add('hidden');
+        document.getElementById('loginGate').classList.remove('hidden');
+        document.getElementById('accessKeyInput').value = '';
+        document.getElementById('loginErrorBox').classList.add('hidden');
+        hideUserLoader();
+        showToast({ title: 'Çıkış Yapıldı', message: 'Oturumunuz başarıyla kapatıldı.', type: 'info' });
+      }, 700);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      applyLanguage(currentLang);
+      if (activeKey) {
+        verifyAndUnlockKey(activeKey, true);
+      }
+    });
+
+    // Tab Navigation Logic
+    function switchTab(tab) {
+      const distroView = document.getElementById('distroView');
+      const storesView = document.getElementById('storesView');
+      const tabBtnDistro = document.getElementById('tabBtnDistro');
+      const tabBtnStores = document.getElementById('tabBtnStores');
+
+      if (tab === 'distro') {
+        distroView.classList.remove('hidden');
+        storesView.classList.add('hidden');
+        tabBtnDistro.className = 'px-5 sm:px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/20';
+        tabBtnStores.className = 'px-5 sm:px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800/60';
+      } else {
+        distroView.classList.add('hidden');
+        storesView.classList.remove('hidden');
+        tabBtnStores.className = 'px-5 sm:px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-500/25';
+        tabBtnDistro.className = 'px-5 sm:px-7 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-zinc-800/60';
+      }
+    }
+
+    // 40 Stores List
+    const ALL_STORES = [
+      { id: 'amazon', name: 'Amazon', icon: 'fa-brands fa-amazon', category: 'Global Store' },
+      { id: 'amazon-music', name: 'Amazon Music', icon: 'fa-solid fa-music', category: 'Streaming' },
+      { id: 'anghami', name: 'Anghami', icon: 'fa-solid fa-play', category: 'Regional (MENA)' },
+      { id: 'apple-music', name: 'Apple Music', icon: 'fa-brands fa-apple', category: 'Streaming' },
+      { id: 'audiomack', name: 'Audiomack', icon: 'fa-solid fa-headphones', category: 'Streaming' },
+      { id: 'audius', name: 'Audius', icon: 'fa-solid fa-bolt', category: 'Web3 / Indie' },
+      { id: 'awa', name: 'AWA', icon: 'fa-solid fa-wave-square', category: 'Regional (Japan)' },
+      { id: 'bandcamp', name: 'Bandcamp', icon: 'fa-brands fa-bandcamp', category: 'Indie Store' },
+      { id: 'beatport', name: 'Beatport', icon: 'fa-solid fa-sliders', category: 'Electronic / DJ' },
+      { id: 'boomplay', name: 'Boomplay', icon: 'fa-solid fa-fire', category: 'Regional (Africa)' },
+      { id: 'deezer', name: 'Deezer', icon: 'fa-brands fa-deezer', category: 'Streaming' },
+      { id: 'discogs', name: 'Discogs', icon: 'fa-solid fa-record-vinyl', category: 'Database / Physical' },
+      { id: 'flo', name: 'FLO', icon: 'fa-solid fa-water', category: 'Regional (Korea)' },
+      { id: 'gaana', name: 'Gaana', icon: 'fa-solid fa-guitar', category: 'Regional (India)' },
+      { id: 'genius', name: 'Genius', icon: 'fa-solid fa-font', category: 'Lyrics / Data' },
+      { id: 'instagram', name: 'Instagram', icon: 'fa-brands fa-instagram', category: 'Social Audio' },
+      { id: 'jiosaavn', name: 'JioSaavn', icon: 'fa-solid fa-radio', category: 'Regional (India)' },
+      { id: 'joox', name: 'Joox', icon: 'fa-solid fa-compact-disc', category: 'Regional (Asia)' },
+      { id: 'kkbox', name: 'KKBOX', icon: 'fa-solid fa-box', category: 'Regional (Asia)' },
+      { id: 'line-music', name: 'Line Music', icon: 'fa-brands fa-line', category: 'Regional (Japan)' },
+      { id: 'musicbrainz', name: 'MusicBrainz', icon: 'fa-solid fa-brain', category: 'Open Database' },
+      { id: 'napster', name: 'Napster', icon: 'fa-brands fa-napster', category: 'Streaming' },
+      { id: 'iheartradio', name: 'iHeartRadio', icon: 'fa-solid fa-heart', category: 'Radio / Streaming' },
+      { id: 'netease', name: 'NetEase', icon: 'fa-solid fa-cloud', category: 'Regional (China)' },
+      { id: 'pandora', name: 'Pandora', icon: 'fa-solid fa-p', category: 'Radio / USA' },
+      { id: 'qobuz', name: 'Qobuz', icon: 'fa-solid fa-circle-nodes', category: 'Hi-Res Audio' },
+      { id: 'qq-music', name: 'QQ Music', icon: 'fa-brands fa-qq', category: 'Regional (China)' },
+      { id: '7digital', name: '7digital', icon: 'fa-solid fa-7', category: 'B2B Digital Store' },
+      { id: 'shazam', name: 'Shazam', icon: 'fa-solid fa-bolt-lightning', category: 'Recognition' },
+      { id: 'soundcloud', name: 'SoundCloud', icon: 'fa-brands fa-soundcloud', category: 'Streaming' },
+      { id: 'spotify', name: 'Spotify', icon: 'fa-brands fa-spotify', category: 'Streaming' },
+      { id: 'telmore-musik', name: 'Telmore Musik', icon: 'fa-solid fa-mobile-screen', category: 'Regional (Nordic)' },
+      { id: 'tidal', name: 'Tidal', icon: 'fa-solid fa-water', category: 'Hi-Fi Streaming' },
+      { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', category: 'Social Audio' },
+      { id: 'trebel', name: 'Trebel', icon: 'fa-solid fa-triangle-exclamation', category: 'Free Music App' },
+      { id: 'yandex', name: 'Yandex', icon: 'fa-brands fa-yandex', category: 'Regional (CIS)' },
+      { id: 'yousee-musik', name: 'YouSee Musik', icon: 'fa-solid fa-tv', category: 'Regional (Nordic)' },
+      { id: 'youtube', name: 'YouTube', icon: 'fa-brands fa-youtube', category: 'Video / Content ID' },
+      { id: 'youtube-music', name: 'YouTube Music', icon: 'fa-brands fa-youtube', category: 'Streaming' },
+      { id: 'youtube-shorts', name: 'YouTube Shorts', icon: 'fa-solid fa-clapperboard', category: 'Social Audio' }
+    ];
+
+    let storeResults = null;
+    let activeFilter = 'all';
+
+    function initStoresGrid(stores = null) {
+      const grid = document.getElementById('storesGrid');
+      grid.innerHTML = '';
+      const list = stores || ALL_STORES.map(s => ({ ...s, isLive: null }));
+
+      list.forEach(item => {
+        const isLive = item.isLive === true;
+        const isMissing = item.isLive === false;
+
+        if (activeFilter === 'live' && !isLive) return;
+        if (activeFilter === 'missing' && !isMissing) return;
+
+        const card = document.createElement('div');
+        let cardClasses = 'p-3 rounded-xl border transition flex flex-col justify-between ';
+        let statusBadge = '';
+
+        if (isLive) {
+          cardClasses += 'bg-emerald-950/25 border-emerald-500/40 shadow-sm shadow-emerald-500/10 hover:border-emerald-500/60';
+          statusBadge = '<span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/30 flex items-center gap-1 shrink-0"><i class="fa-solid fa-circle-check"></i> Yayında</span>';
+        } else if (isMissing) {
+          cardClasses += 'bg-zinc-900/40 border-zinc-800/80 opacity-60 hover:opacity-100';
+          statusBadge = '<span class="px-1.5 py-0.5 rounded-md bg-zinc-800/80 text-zinc-500 text-[10px] shrink-0">✕ Yok</span>';
+        } else {
+          cardClasses += 'bg-zinc-900/50 border-zinc-800/60';
+          statusBadge = '<span class="text-[10px] text-zinc-500 font-mono shrink-0">--</span>';
+        }
+
+        card.className = cardClasses;
+        
+        let linkAction = '';
+        if (isLive && item.url) {
+          linkAction = `<a href="${item.url}" target="_blank" class="mt-2 text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition"><span>Aç</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 truncate">
+              <i class="${item.icon} text-zinc-400 text-sm w-4 text-center"></i>
+              <span class="text-xs font-semibold text-zinc-200 truncate">${item.name}</span>
+            </div>
+            ${statusBadge}
+          </div>
+          <div class="flex items-center justify-between mt-2 pt-1 border-t border-zinc-800/40 text-[9px] text-zinc-500 font-mono">
+            <span>${item.category}</span>
+            ${linkAction}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    function filterStores(type) {
+      activeFilter = type;
+      ['All', 'Live', 'Missing'].forEach(t => {
+        const btn = document.getElementById('filterBtn' + t);
+        if (t.toLowerCase() === type) {
+          btn.className = 'px-3 py-1.5 rounded-lg bg-zinc-800 text-white font-semibold border border-zinc-700 transition cursor-pointer';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg bg-zinc-900 text-zinc-400 font-semibold hover:bg-zinc-800 border border-transparent hover:border-zinc-700 transition cursor-pointer';
+        }
+      });
+      initStoresGrid(storeResults);
+    }
+
+    // Distributor Search Handler
+    let currentTrackData = null;
+
+    function setQuery(url) {
+      document.getElementById('urlInput').value = url;
+      handleDistroSearch(new Event('submit'));
+    }
+
+    function setStoreQuery(url) {
+      document.getElementById('storeUrlInput').value = url;
+      handleStoreSearch(new Event('submit'));
+    }
+
+    function switchToStoreCheckerForCurrentTrack() {
+      if (currentTrackData?.trackId) {
+        switchTab('stores');
+        setStoreQuery(`https://open.spotify.com/track/${currentTrackData.trackId}`);
+      }
+    }
+
+    async function handleDistroSearch(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const query = document.getElementById('urlInput').value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const errorBox = document.getElementById('errorBox');
+      const resultCard = document.getElementById('resultCard');
+      const albumContainer = document.getElementById('albumContainer');
+
+      btn.disabled = true;
+      btnSpinner.classList.remove('hidden');
+      btnText.innerText = 'Taranıyor...';
+      errorBox.classList.add('hidden');
+      resultCard.classList.add('hidden');
+      albumContainer.classList.add('hidden');
+
+      try {
+        const res = await fetch(`/api/lookup?query=${encodeURIComponent(query)}`, {
+          headers: { 'x-access-key': activeKey }
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+          handleSignOut();
+          showLoginError('Erişim anahtarınızın süresi dolmuş veya geçersiz.');
+          return;
+        }
+
+        if (res.status === 429) {
+          const r = await res.json();
+          throw new Error(r.error || 'Çok fazla istek gönderildi. Lütfen bekleyiniz.');
+        }
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'Şarkı bilgisi alınamadı.');
+        }
+
+        if (json.type === 'track') {
+          renderTrackResult(json.data);
+        } else if (json.type === 'album') {
+          renderAlbumResult(json);
+        }
+      } catch (err) {
+        document.getElementById('errorMessage').innerText = err.message;
+        errorBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btnSpinner.classList.add('hidden');
+        btnText.innerText = translations[currentLang]?.findDistroBtn || 'Distribütörü Bul';
+      }
+    }
+
+    function renderTrackResult(data) {
+      currentTrackData = data;
+      const resultCard = document.getElementById('resultCard');
+      resultCard.classList.remove('hidden');
+
+      document.getElementById('coverImg').src = data.coverUrl || 'https://via.placeholder.com/300?text=Cover';
+      document.getElementById('spotifyLink').href = data.trackId ? `https://open.spotify.com/track/${data.trackId}` : '#';
+      document.getElementById('trackTitle').innerText = data.trackName || '--';
+      document.getElementById('artistNames').innerText = (data.artists || []).join(', ') || '--';
+
+      document.getElementById('distroName').innerText = data.distributorDisplay || 'Bilinmiyor';
+      
+      const labelTag = document.getElementById('distroLabelTag');
+      if (data.isWhiteLabel && data.subLabel) {
+        labelTag.classList.remove('hidden');
+        document.getElementById('distroLabelText').innerText = data.subLabel;
+      } else {
+        labelTag.classList.add('hidden');
+      }
+
+      document.getElementById('isrcCode').innerText = data.isrc || '--';
+      document.getElementById('labelName').innerText = data.label || '--';
+      document.getElementById('playcount').innerText = data.playcountDisplay || (data.playcount ? Number(data.playcount).toLocaleString() : '--');
+      document.getElementById('catalogDate').innerText = data.catalogDate || data.releaseDate || '--';
+    }
+
+    function renderAlbumResult(data) {
+      const albumContainer = document.getElementById('albumContainer');
+      const albumList = document.getElementById('albumTrackList');
+      const countBadge = document.getElementById('albumCountBadge');
+      albumContainer.classList.remove('hidden');
+      albumList.innerHTML = '';
+      countBadge.innerText = `${data.totalTracks || data.tracks?.length || 0} Parça`;
+
+      (data.tracks || []).forEach((t, i) => {
+        const item = document.createElement('div');
+        item.className = 'p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between text-xs';
+        const d = t.data;
+        if (d) {
+          item.innerHTML = `
+            <div class="flex items-center gap-3 truncate">
+              <span class="font-mono text-zinc-500 w-5">${i + 1}.</span>
+              <img src="${d.coverUrl}" class="w-8 h-8 rounded object-cover" />
+              <div class="truncate">
+                <span class="text-white font-semibold truncate block">${d.trackName}</span>
+                <span class="text-zinc-400 text-[10px]">${(d.artists || []).join(', ')}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">${d.distributorDisplay}</span>
+            </div>
+          `;
+        }
+        albumList.appendChild(item);
+      });
+    }
+
+    // Store Distribution Search Handler
+    async function handleStoreSearch(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const query = document.getElementById('storeUrlInput').value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('storeSubmitBtn');
+      const btnText = document.getElementById('storeBtnText');
+      const btnSpinner = document.getElementById('storeBtnSpinner');
+      const errorBox = document.getElementById('storeErrorBox');
+      const card = document.getElementById('storeResultCard');
+
+      btn.disabled = true;
+      btnSpinner.classList.remove('hidden');
+      btnText.innerText = 'Taranıyor...';
+      errorBox.classList.add('hidden');
+
+      try {
+        const res = await fetch(`/api/stores?query=${encodeURIComponent(query)}`, {
+          headers: { 'x-access-key': activeKey }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          handleSignOut();
+          showLoginError('Erişim anahtarınızın süresi dolmuş veya geçersiz.');
+          return;
+        }
+
+        if (res.status === 429) {
+          const r = await res.json();
+          throw new Error(r.error || 'Çok fazla istek gönderildi. Lütfen bekleyiniz.');
+        }
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || 'Mağaza dağıtımı denetlenemedi.');
+        }
+
+        const data = json.data;
+        storeResults = data.stores;
+
+        document.getElementById('storeTrackTitle').innerText = data.title || 'Parça';
+        document.getElementById('storeTrackSubtitle').innerText = data.subtitle || '';
+        document.getElementById('storeTrackFooter').innerText = data.footerContent || '';
+        if (data.image) {
+          document.getElementById('storeTrackImg').src = data.image;
+        }
+
+        document.getElementById('storeLiveCountBadge').innerText = `${data.liveCount} / ${data.totalCount}`;
+        document.getElementById('storePercentBadge').innerText = `%${data.percentage}`;
+        document.getElementById('storeProgressBar').style.width = `${data.percentage}%`;
+
+        initStoresGrid(storeResults);
+        card.classList.remove('hidden');
+      } catch (err) {
+        document.getElementById('storeErrorMessage').innerText = err.message;
+        errorBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btnSpinner.classList.add('hidden');
+        btnText.innerText = translations[currentLang]?.checkStoresBtn || '40 Mağazayı Canlı Denetle';
+      }
+    }
+
+    function copyText(elemId) {
+      const text = document.getElementById(elemId)?.innerText;
+      if (text) {
+        navigator.clipboard.writeText(text);
+        showToast({ title: 'Kopyalandı', message: text, type: 'info' });
+      }
+    }
+  </script>
+</body>
+</html>

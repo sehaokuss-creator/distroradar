@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+*.log
+DISTROFINDER_PRO_MASTER.zip
+DISTROFINDER_PRO_MASTER/
+DISTROFINDER_PRO_PACKAGE/
+scratch/
+test_*.mjs
+*_harvester.mjs
+*_scanner.mjs
+check_raw.mjs
+.DS_Store
+Thumbs.db

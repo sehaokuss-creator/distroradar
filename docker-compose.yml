@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  distrofinder:
+    build: .
+    container_name: distributorfinder-pro
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MASTER_ADMIN_KEY=dfinder_master_2026
+    volumes:
+      - ./access_keys.json:/app/access_keys.json
+      - ./hash_map.json:/app/hash_map.json
