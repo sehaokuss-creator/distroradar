@@ -1043,10 +1043,17 @@
         const roleBadge = getRoleBadgeHtml(k.role);
 
         // Actions: Copy + Settings Gear Icon + Revoke/Reactivate + Direct Delete Button (Sistemde Kalmasın)
+        const safeLabel = (k.label || '').replace(/'/g, "\\'");
         tr.innerHTML = `
           <td class="py-3 px-3 font-mono font-bold text-emerald-400 select-all">${k.key}</td>
           <td class="py-3 px-3 text-zinc-300 font-medium">
-            <span id="label_${k.key}">${k.label || '-'}</span>
+            <div class="flex items-center gap-2">
+              <span id="label_${k.key}">${k.label || '-'}</span>
+              <button onclick="quickEditKeyLabel('${k.key}', '${safeLabel}')" class="px-1.5 py-0.5 rounded bg-zinc-800/80 hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-400 border border-zinc-700/60 hover:border-emerald-500/40 text-[10px] transition cursor-pointer flex items-center gap-1" title="Kullanıcı / Müşteri Adını Değiştir">
+                <i class="fa-solid fa-pen"></i>
+                <span class="text-[9px]">Düzenle</span>
+              </button>
+            </div>
           </td>
           <td class="py-3 px-3">${roleBadge}</td>
           <td class="py-3 px-3 text-zinc-400 font-mono">${expText}</td>
@@ -1088,6 +1095,38 @@
       });
     }
 
+    // Quick inline rename for Key Label / Username
+    async function quickEditKeyLabel(key, currentLabel) {
+      const newName = prompt('Yeni Kullanıcı / Müşteri Adını Giriniz:', currentLabel || '');
+      if (newName === null) return;
+      const clean = newName.trim();
+      if (!clean) return;
+
+      try {
+        const res = await fetch('/api/admin/update-key', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({ key, label: clean })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const el = document.getElementById(`label_${key}`);
+          if (el) el.innerText = clean;
+          const kObj = allKeys.find(x => x.key === key);
+          if (kObj) kObj.label = clean;
+          await loadUsersAndQueries();
+          showToast({ title: 'Kullanıcı Adı Güncellendi', message: `İsim başarıyla "${clean}" yapıldı.`, type: 'success' });
+        } else {
+          showToast({ title: 'Hata', message: data.error || 'İsim güncellenemedi.', type: 'error' });
+        }
+      } catch (err) {
+        showToast({ title: 'Hata', message: 'Bağlantı hatası.', type: 'error' });
+      }
+    }
+
     // Create Key (With Role/Plan Selection)
     async function createKey() {
       const label = document.getElementById('keyLabelInput').value.trim() || 'Müşteri Key';
@@ -1121,7 +1160,7 @@
           const roleName = role === 'admin' ? '👑 Admin' : (role === 'premium' ? '⭐ Premium VIP' : '👤 Standart');
           showToast({
             title: `Yeni ${roleName} Key Üretildi`,
-            message: `"${data.key.label}" yetkilendirildi ve panoya kopyalandı.`,
+            message: `"${data.key.label}" üretildi ve panoya kopyalandı: ${data.key.key}`,
             type: 'success',
             keyToCopy: data.key.key
           });

@@ -7,6 +7,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const KEYS_FILE = path.join(__dirname, 'access_keys.json');
+const TMP_KEYS_FILE = path.join('/tmp', 'access_keys.json');
+const GIST_ID = process.env.STORAGE_GIST_ID || '87d0c6953bb189d4df145a11004dab7e';
+const GITHUB_TOKEN = process.env.STORAGE_GH_TOKEN;
 
 // Default initial keys if file doesn't exist
 const DEFAULT_KEYS = {
@@ -40,7 +43,55 @@ class KeyManager {
         this.loadKeys();
     }
 
+    async syncFromGist() {
+        if (!GITHUB_TOKEN || !GIST_ID) return;
+        try {
+            const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'User-Agent': 'DistroRadar-App'
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const content = data.files?.['access_keys.json']?.content;
+                if (content) {
+                    const parsed = JSON.parse(content);
+                    for (const [k, v] of Object.entries(parsed)) {
+                        this.keys.set(k, v);
+                    }
+                    console.log(`🔑 [KEY MANAGER] Synced ${this.keys.size} keys from cloud storage.`);
+                }
+            }
+        } catch (e) {
+            console.error('[KEY MANAGER] Cloud sync error:', e.message);
+        }
+    }
+
+    async syncToGist() {
+        if (!GITHUB_TOKEN || !GIST_ID) return;
+        try {
+            const obj = Object.fromEntries(this.keys);
+            await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'User-Agent': 'DistroRadar-App',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    files: {
+                        'access_keys.json': { content: JSON.stringify(obj, null, 2) }
+                    }
+                })
+            });
+        } catch (e) {
+            console.error('[KEY MANAGER] Cloud save error:', e.message);
+        }
+    }
+
     loadKeys() {
+        // 1. Primary load from build-time file
         try {
             if (fs.existsSync(KEYS_FILE)) {
                 const raw = fs.readFileSync(KEYS_FILE, 'utf8');
@@ -50,12 +101,24 @@ class KeyManager {
             } else {
                 this.keys = new Map(Object.entries(DEFAULT_KEYS));
                 this.saveKeys();
-                console.log(`🔑 [KEY MANAGER] Seeded default access keys to ${KEYS_FILE}`);
             }
         } catch (err) {
-            console.error('Error loading access_keys.json:', err.message);
             this.keys = new Map(Object.entries(DEFAULT_KEYS));
         }
+
+        // 2. Load from ephemeral /tmp if exists
+        try {
+            if (fs.existsSync(TMP_KEYS_FILE)) {
+                const raw = fs.readFileSync(TMP_KEYS_FILE, 'utf8');
+                const parsed = JSON.parse(raw);
+                for (const [k, v] of Object.entries(parsed)) {
+                    this.keys.set(k, v);
+                }
+            }
+        } catch (e) {}
+
+        // 3. Background cloud sync
+        this.syncFromGist().catch(() => {});
 
         // Allow environment variable to inject or enforce master key
         if (process.env.MASTER_ADMIN_KEY && !this.keys.has(process.env.MASTER_ADMIN_KEY)) {
@@ -75,25 +138,35 @@ class KeyManager {
     }
 
     saveKeys() {
+        const obj = Object.fromEntries(this.keys);
         try {
-            const obj = Object.fromEntries(this.keys);
             fs.writeFileSync(KEYS_FILE, JSON.stringify(obj, null, 2), 'utf8');
-        } catch (err) {
-            console.error('Error saving access_keys.json:', err.message);
-        }
+        } catch (err) {}
+
+        try {
+            fs.writeFileSync(TMP_KEYS_FILE, JSON.stringify(obj, null, 2), 'utf8');
+        } catch (err) {}
+
+        this.syncToGist().catch(() => {});
     }
 
     /**
      * Verifies if a given key is valid, active, and unexpired.
      * Increments usage count upon successful verification.
      */
-    verifyKey(keyString) {
+    async verifyKey(keyString) {
         if (!keyString || typeof keyString !== 'string') {
             return { valid: false, reason: 'Key sağlanmadı.' };
         }
 
         const trimmed = keyString.trim();
-        const entry = this.keys.get(trimmed);
+        let entry = this.keys.get(trimmed);
+
+        if (!entry) {
+            // Check cloud storage in case key was just created in another instance
+            await this.syncFromGist();
+            entry = this.keys.get(trimmed);
+        }
 
         if (!entry) {
             return { valid: false, reason: 'Geçersiz erişim anahtarı (Invalid access key).' };

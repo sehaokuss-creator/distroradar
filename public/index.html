@@ -230,10 +230,16 @@
         <!-- Center / Right Controls -->
         <div class="flex items-center gap-2 sm:gap-3">
           
-          <!-- Key Badge -->
-          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono">
-            <i class="fa-solid fa-key text-emerald-400 text-[10px]"></i>
-            <span id="headerKeyDisplay" class="text-zinc-300">dfinder_...</span>
+          <!-- User Profile & Name Badge -->
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs shadow-sm">
+            <span id="headerUserRoleBadge"></span>
+            <div class="flex items-center gap-1.5 cursor-pointer hover:text-emerald-400 transition" onclick="changeMyUsername()" title="Kullanıcı adınızı değiştirmek için tıklayın">
+              <i class="fa-solid fa-circle-user text-emerald-400"></i>
+              <span id="headerUserName" class="text-white font-bold max-w-[140px] truncate">Kullanıcı</span>
+              <i class="fa-solid fa-pen text-[9px] text-zinc-500 hover:text-emerald-300 ml-0.5"></i>
+            </div>
+            <span class="text-zinc-700 hidden sm:inline">|</span>
+            <span id="headerKeyDisplay" class="text-zinc-500 font-mono text-[11px] hidden sm:inline">dfinder_...</span>
           </div>
 
           <!-- Language Switcher -->
@@ -666,7 +672,50 @@
 
       const maskedKey = activeKey.length > 18 ? activeKey.slice(0, 10) + '...' + activeKey.slice(-4) : activeKey;
       document.getElementById('headerKeyDisplay').innerText = maskedKey;
+
+      const userName = userData.label || 'Kullanıcı';
+      document.getElementById('headerUserName').innerText = userName;
+
+      const role = userData.role || 'user';
+      let roleHtml = '';
+      if (role === 'admin') {
+        roleHtml = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">👑 ADMIN</span>';
+      } else if (role === 'premium') {
+        roleHtml = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30">⭐ VIP</span>';
+      } else {
+        roleHtml = '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">👤 PRO</span>';
+      }
+      document.getElementById('headerUserRoleBadge').innerHTML = roleHtml;
+
       applyLanguage(currentLang);
+    }
+
+    async function changeMyUsername() {
+      const cur = document.getElementById('headerUserName').innerText;
+      const newName = prompt('Yeni Kullanıcı Adınızı Giriniz:', cur);
+      if (newName === null) return;
+      const clean = newName.trim();
+      if (!clean) return;
+
+      try {
+        const res = await fetch('/api/user/update-name', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + activeKey
+          },
+          body: JSON.stringify({ name: clean })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('headerUserName').innerText = clean;
+          showToast({ title: 'Kullanıcı Adı Güncellendi', message: `İsminiz "${clean}" olarak kaydedildi.`, type: 'success' });
+        } else {
+          showToast({ title: 'Hata', message: data.error || 'İsim değiştirilemedi.', type: 'error' });
+        }
+      } catch (e) {
+        showToast({ title: 'Hata', message: 'Bağlantı hatası.', type: 'error' });
+      }
     }
 
     function showLoginError(msg) {

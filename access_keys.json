@@ -57,7 +57,7 @@
     "expiresAt": "2026-10-12T10:51:48.681Z",
     "maxUses": null,
     "useCount": 0,
-    "active": false,
+    "active": true,
     "updatedAt": "2026-09-12T11:03:51.681Z"
   },
   "dfinder_95ed112acc0d88f259cd3f7a": {
@@ -80,6 +80,24 @@
     "expiresAt": "2026-10-12T11:01:55.274Z",
     "maxUses": null,
     "useCount": 0,
-    "active": false
+    "active": true
+  },
+  "dfinder_prem_eda442842c71e24a01a66e1d": {
+    "id": "key_86802ceeba90",
+    "key": "dfinder_prem_eda442842c71e24a01a66e1d",
+    "role": "premium",
+    "label": "Updated Custom Name",
+    "createdAt": "2026-09-12T11:53:44.747Z",
+    "expiresAt": null,
+    "maxUses": null,
+    "useCount": 2,
+    "active": true,
+    "rateLimit": 120,
+    "features": {
+      "canLookup": true,
+      "canCheckStores": true
+    },
+    "lastUsedAt": "2026-09-12T11:53:44.768Z",
+    "updatedAt": "2026-09-12T11:53:44.766Z"
   }
 }

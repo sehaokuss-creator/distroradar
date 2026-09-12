@@ -66,7 +66,7 @@ function extractKey(req) {
     return req.headers['x-access-key'] || req.query.key || req.body?.accessKey || req.body?.key;
 }
 
-function requireAccessKey(req, res, next) {
+async function requireAccessKey(req, res, next) {
     const key = extractKey(req);
     if (!key) {
         return res.status(401).json({
@@ -76,7 +76,7 @@ function requireAccessKey(req, res, next) {
         });
     }
 
-    const verification = keyManager.verifyKey(key);
+    const verification = await keyManager.verifyKey(key);
     if (!verification.valid) {
         return res.status(403).json({
             success: false,
@@ -106,13 +106,28 @@ function requireAdminAuth(req, res, next) {
 }
 
 // Public Key Verification Endpoint
-app.post('/api/auth/verify', (req, res) => {
+app.post('/api/auth/verify', async (req, res) => {
     const key = req.body?.key || extractKey(req);
     if (!key) {
         return res.status(400).json({ valid: false, reason: 'Key sağlanmadı.' });
     }
-    const result = keyManager.verifyKey(key);
+    const result = await keyManager.verifyKey(key);
     return res.json(result);
+});
+
+// User Name Update Endpoint (Allows users to customize their display name)
+app.post('/api/user/update-name', requireAccessKey, (req, res) => {
+    const { name } = req.body || {};
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ success: false, error: 'Geçerli bir isim giriniz.' });
+    }
+    const cleanName = name.trim().slice(0, 50);
+    const key = req.accessKey?.key;
+    const updated = keyManager.updateKey(key, { label: cleanName });
+    if (updated) {
+        return res.json({ success: true, name: cleanName, user: updated });
+    }
+    return res.status(404).json({ success: false, error: 'Kullanıcı bulunamadı.' });
 });
 
 // Admin Password Login Endpoint
