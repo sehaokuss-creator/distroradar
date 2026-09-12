@@ -12,3 +12,6 @@ test_*.mjs
 check_raw.mjs
 .DS_Store
 Thumbs.db
+.vercel
+cloudflared.exe
+

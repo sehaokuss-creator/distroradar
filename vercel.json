@@ -1,9 +1,18 @@
 {
   "version": 2,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "*.json"
+    }
+  },
   "rewrites": [
     {
+      "source": "/admin-panel",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/server.js"
+      "destination": "/api/index.js"
     }
   ]
 }

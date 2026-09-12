@@ -1,5 +1,20 @@
 [
   {
+    "id": "log_1789212710485_d5yws",
+    "timestamp": "2026-09-12T11:31:50.485Z",
+    "ip": "16.171.114.6",
+    "key": "dfinder_master_2026",
+    "fullKey": "dfinder_master_2026",
+    "keyLabel": "Master Administrator Key",
+    "type": "lookup",
+    "trackId": "2G7V7zsVDxg1yRsu7Ew9RJ",
+    "trackName": "In My Feelings",
+    "artistName": "Drake",
+    "coverUrl": "https://i.scdn.co/image/ab67616d00001e02f907de96b9a4fbc04accc0d5",
+    "distributor": "Universal Music Group",
+    "storesCount": 0
+  },
+  {
     "id": "log_1789211051798_ojhh7",
     "timestamp": "2026-09-12T11:04:11.798Z",
     "ip": "::1",

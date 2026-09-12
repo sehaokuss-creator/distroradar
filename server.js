@@ -31,11 +31,15 @@ function getAdminPassword() {
 }
 
 function setAdminPassword(newPassword) {
-    const cfg = {
-        adminPassword: newPassword,
-        updatedAt: new Date().toISOString()
-    };
-    fs.writeFileSync(ADMIN_CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+    try {
+        const cfg = {
+            adminPassword: newPassword,
+            updatedAt: new Date().toISOString()
+        };
+        fs.writeFileSync(ADMIN_CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+    } catch (e) {
+        console.error('Failed to write admin config:', e.message);
+    }
 }
 
 // Admin Session Token Store (in-memory)
@@ -464,4 +468,6 @@ process.on('exit', (code) => {
 });
 
 // Heartbeat
-setInterval(() => {}, 30000);
+if (!process.env.VERCEL) {
+    setInterval(() => {}, 30000);
+}
