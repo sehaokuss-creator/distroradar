@@ -432,17 +432,24 @@ app.get('/api/distributors', (req, res) => {
     return res.json([]);
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`=======================================================`);
-    console.log(`🎵 DistroRadar Pro Sunucusu Başlatıldı!`);
-    console.log(`🚀 Kullanıcı Arayüzü: http://localhost:${PORT}`);
-    console.log(`🛡️ Yönetici Paneli:   http://localhost:${PORT}/admin-panel`);
-    console.log(`=======================================================`);
-});
+let server;
+if (!process.env.VERCEL) {
+    server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`=======================================================`);
+        console.log(`🎵 DistroRadar Pro Sunucusu Başlatıldı!`);
+        console.log(`🚀 Kullanıcı Arayüzü: http://localhost:${PORT}`);
+        console.log(`🛡️ Yönetici Paneli:   http://localhost:${PORT}/admin-panel`);
+        console.log(`=======================================================`);
+    });
+}
 
-server.on('error', (e) => {
-    console.error('Server error:', e);
-});
+export default app;
+
+if (server) {
+    server.on('error', (e) => {
+        console.error('Server error:', e);
+    });
+}
 
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
