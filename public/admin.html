@@ -375,6 +375,13 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <!-- 30-Minute Admin Session Indicator -->
+          <div id="adminSessionCountdownBadge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono shadow-sm cursor-pointer hover:border-amber-500/40 transition" onclick="touchAdminSession(true)" title="30 dakikalık aktif yönetici oturum süreniz. Tıklayarak veya işlem yaparak oturumu 30 dakikaya uzatabilirsiniz.">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="text-zinc-500 hidden md:inline">Oturum:</span>
+            <span id="adminSessionCountdownText" class="text-amber-400 font-bold">30:00</span>
+          </div>
+
           <a href="/" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition flex items-center gap-1.5">
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             <span class="hidden sm:inline">Canlı Site</span>
@@ -733,7 +740,68 @@
   <!-- JAVASCRIPT LOGIC                                                          -->
   <!-- ========================================================================= -->
   <script>
-    let adminToken = sessionStorage.getItem('distro_admin_token') || null;
+    // 30-Minute Rolling Admin Session Management
+    const ADMIN_SESSION_DURATION = 30 * 60 * 1000; // 30 minutes
+    let adminToken = null;
+    let adminExpiresAt = null;
+    let adminSessionTimerInterval = null;
+
+    function saveAdminSession(token, expiresAt) {
+      adminToken = token;
+      adminExpiresAt = expiresAt || (Date.now() + ADMIN_SESSION_DURATION);
+      localStorage.setItem('distro_admin_session', JSON.stringify({
+        token: adminToken,
+        expiresAt: adminExpiresAt
+      }));
+      sessionStorage.setItem('distro_admin_token', adminToken);
+      startAdminSessionTimer();
+    }
+
+    function touchAdminSession(notify = false) {
+      if (!adminToken) return;
+      adminExpiresAt = Date.now() + ADMIN_SESSION_DURATION;
+      localStorage.setItem('distro_admin_session', JSON.stringify({
+        token: adminToken,
+        expiresAt: adminExpiresAt
+      }));
+      updateAdminSessionCountdownUI();
+      if (notify) {
+        showToast({ title: 'Oturum Uzatıldı', message: '30 dakikalık yönetici oturum süreniz sıfırlandı.', type: 'info' });
+      }
+    }
+
+    function startAdminSessionTimer() {
+      if (adminSessionTimerInterval) clearInterval(adminSessionTimerInterval);
+      updateAdminSessionCountdownUI();
+      adminSessionTimerInterval = setInterval(updateAdminSessionCountdownUI, 1000);
+    }
+
+    function updateAdminSessionCountdownUI() {
+      if (!adminExpiresAt) return;
+      const remainingMs = adminExpiresAt - Date.now();
+      if (remainingMs <= 0) {
+        clearInterval(adminSessionTimerInterval);
+        handleAdminLogout(true);
+        return;
+      }
+      const totalSec = Math.floor(remainingMs / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const formatted = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      const el = document.getElementById('adminSessionCountdownText');
+      if (el) el.innerText = formatted;
+    }
+
+    // Auto touch admin session on user activity (debounced to once every 10 seconds)
+    let lastAdminActivityTouch = Date.now();
+    ['click', 'keydown', 'touchstart'].forEach(evt => {
+      window.addEventListener(evt, () => {
+        if (adminToken && Date.now() - lastAdminActivityTouch > 10000) {
+          lastAdminActivityTouch = Date.now();
+          touchAdminSession();
+        }
+      }, { passive: true });
+    });
 
     // State
     let allKeys = [];
@@ -870,14 +938,13 @@
         });
         const data = await res.json();
         if (data.success && data.token) {
-          adminToken = data.token;
-          sessionStorage.setItem('distro_admin_token', adminToken);
+          saveAdminSession(data.token, data.expiresAt);
           
           showLoader('Yönetici Oturumu Başlatılıyor...', 'Güvenlik yetkisi onaylanıyor...', 65);
           setTimeout(() => {
             hideLoader();
             unlockAdminDashboard();
-            showToast({ title: 'Giriş Başarılı', message: 'Yönetici paneli başarıyla açıldı.', type: 'success' });
+            showToast({ title: 'Giriş Başarılı', message: 'Yönetici paneli başarıyla açıldı (30 dk oturum).', type: 'success' });
           }, 800);
 
         } else {
@@ -895,11 +962,25 @@
       }
     }
 
-    function handleAdminLogout() {
+    function handleAdminLogout(isTimeout = false) {
+      if (adminSessionTimerInterval) clearInterval(adminSessionTimerInterval);
+      localStorage.removeItem('distro_admin_session');
+      sessionStorage.removeItem('distro_admin_token');
+      adminToken = null;
+      adminExpiresAt = null;
+
+      if (isTimeout) {
+        document.getElementById('adminDashboard').classList.add('hidden');
+        document.getElementById('adminLoginGate').classList.remove('hidden');
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('adminLoginErrorText').innerText = '30 dakikalık yönetici oturum süreniz doldu. Lütfen tekrar giriş yapınız.';
+        document.getElementById('adminLoginError').classList.remove('hidden');
+        showToast({ title: 'Oturum Sona Erdi', message: '30 dakikalık oturum süreniz doldu. Lütfen tekrar giriş yapınız.', type: 'error' });
+        return;
+      }
+
       showLoader('Oturum Kapatılıyor...', 'Güvenlik protokolü uygulanıyor...', 75);
       setTimeout(() => {
-        sessionStorage.removeItem('distro_admin_token');
-        adminToken = null;
         document.getElementById('adminDashboard').classList.add('hidden');
         document.getElementById('adminLoginGate').classList.remove('hidden');
         document.getElementById('adminPasswordInput').value = '';
@@ -922,7 +1003,7 @@
         const statsRes = await fetch('/api/admin/stats', {
           headers: { 'Authorization': 'Bearer ' + adminToken }
         });
-        if (statsRes.status === 401) return handleAdminLogout();
+        if (statsRes.status === 401) return handleAdminLogout(true);
         const stats = await statsRes.json();
         if (stats.success) {
           document.getElementById('statTotalQueries').innerText = stats.data.totalQueries || 0;
@@ -934,6 +1015,8 @@
           loadKeysList(),
           loadUsersAndQueries()
         ]);
+
+        touchAdminSession();
       } catch (e) {}
     }
 
@@ -945,6 +1028,7 @@
         const res = await fetch('/api/admin/keys', {
           headers: { 'Authorization': 'Bearer ' + adminToken }
         });
+        if (res.status === 401) return handleAdminLogout(true);
         const data = await res.json();
         if (data.success && Array.isArray(data.keys)) {
           allKeys = data.keys;
@@ -1409,6 +1493,8 @@
           fetch('/api/admin/all-queries', { headers: { 'Authorization': 'Bearer ' + adminToken } })
         ]);
         
+        if (usersRes.status === 401 || queriesRes.status === 401) return handleAdminLogout(true);
+
         const usersData = await usersRes.json();
         const queriesData = await queriesRes.json();
 
@@ -1774,8 +1860,31 @@
 
     // Boot
     window.addEventListener('DOMContentLoaded', () => {
-      if (adminToken) {
-        unlockAdminDashboard();
+      const savedRaw = localStorage.getItem('distro_admin_session');
+      if (savedRaw) {
+        try {
+          const session = JSON.parse(savedRaw);
+          if (session.token && session.expiresAt && session.expiresAt > Date.now()) {
+            adminToken = session.token;
+            adminExpiresAt = session.expiresAt;
+            unlockAdminDashboard();
+            startAdminSessionTimer();
+            return;
+          } else {
+            localStorage.removeItem('distro_admin_session');
+            sessionStorage.removeItem('distro_admin_token');
+            document.getElementById('adminLoginErrorText').innerText = '30 dakikalık yönetici oturum süreniz doldu. Lütfen tekrar giriş yapınız.';
+            document.getElementById('adminLoginError').classList.remove('hidden');
+          }
+        } catch (e) {
+          localStorage.removeItem('distro_admin_session');
+        }
+      } else {
+        const legacyToken = sessionStorage.getItem('distro_admin_token');
+        if (legacyToken) {
+          saveAdminSession(legacyToken, Date.now() + ADMIN_SESSION_DURATION);
+          unlockAdminDashboard();
+        }
       }
     });
   </script>

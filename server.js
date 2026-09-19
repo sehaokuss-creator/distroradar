@@ -42,8 +42,52 @@ function setAdminPassword(newPassword) {
     }
 }
 
-// Admin Session Token Store (in-memory)
+// Admin Session Token System (Cryptographic HMAC-SHA256 with 30-minute Rolling Session)
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'distro_adm_sec_2026_xyz99';
+const ADMIN_SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const adminTokens = new Set();
+
+function generateAdminToken() {
+    const expiresAt = Date.now() + ADMIN_SESSION_DURATION_MS;
+    const payload = `adm_${expiresAt}_${crypto.randomBytes(12).toString('hex')}`;
+    const signature = crypto.createHmac('sha256', ADMIN_SECRET).update(payload).digest('hex');
+    const token = `${payload}.${signature}`;
+    adminTokens.add(token);
+    return { token, expiresAt, durationMs: ADMIN_SESSION_DURATION_MS };
+}
+
+function verifyAdminToken(token) {
+    if (!token || typeof token !== 'string') return false;
+    
+    // Quick in-memory check
+    if (adminTokens.has(token)) {
+        const parts = token.split('.');
+        if (parts.length === 2) {
+            const exp = Number(parts[0].split('_')[1]);
+            if (exp && Date.now() > exp) {
+                adminTokens.delete(token);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Cryptographic validation for cross-instance / serverless support
+    const parts = token.split('.');
+    if (parts.length !== 2) return false;
+    const [payload, signature] = parts;
+    const expectedSig = crypto.createHmac('sha256', ADMIN_SECRET).update(payload).digest('hex');
+    if (signature !== expectedSig) return false;
+
+    const subparts = payload.split('_');
+    const exp = Number(subparts[1]);
+    if (!exp || Date.now() > exp) {
+        return false; // 30-minute session expired
+    }
+
+    adminTokens.add(token);
+    return true;
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -96,10 +140,11 @@ function requireAdminAuth(req, res, next) {
     if (auth && auth.startsWith('Bearer ')) {
         token = auth.slice(7).trim();
     }
-    if (!token || !adminTokens.has(token)) {
+    if (!token || !verifyAdminToken(token)) {
         return res.status(401).json({
             success: false,
-            error: 'Yetkisiz erişim. Lütfen admin şifresiyle giriş yapınız.'
+            error: 'Oturum süreniz (30 dk) doldu veya yetkisiz erişim. Lütfen admin şifresiyle tekrar giriş yapınız.',
+            code: 'ADMIN_SESSION_EXPIRED'
         });
     }
     next();
@@ -130,16 +175,20 @@ app.post('/api/user/update-name', requireAccessKey, (req, res) => {
     return res.status(404).json({ success: false, error: 'Kullanıcı bulunamadı.' });
 });
 
-// Admin Password Login Endpoint
+// Admin Password Login Endpoint (Returns 30-minute token)
 app.post('/api/admin/login', (req, res) => {
     const { password } = req.body || {};
     if (password && password === getAdminPassword()) {
-        const token = 'adm_' + crypto.randomBytes(24).toString('hex');
-        adminTokens.add(token);
-        console.log(`🛡️ [ADMIN LOGIN] Admin logged in successfully from IP: ${securityGuard.getClientIp(req)}`);
-        return res.json({ success: true, token });
+        const sessionInfo = generateAdminToken();
+        console.log(`🛡️ [ADMIN LOGIN] Admin logged in successfully from IP: ${securityGuard.getClientIp(req)} (30-minute session)`);
+        return res.json({ success: true, ...sessionInfo });
     }
     return res.status(401).json({ success: false, error: 'Hatalı yönetici şifresi.' });
+});
+
+// Admin Session Verification / Keepalive Endpoint
+app.get('/api/admin/session', requireAdminAuth, (req, res) => {
+    return res.json({ success: true, message: 'Yönetici oturumu geçerli ve aktif (30 dk).' });
 });
 
 // Admin Password Change Endpoint
@@ -363,8 +412,12 @@ app.get('/api/lookup', requireAccessKey, securityGuard.rateLimiter.bind(security
 // API endpoint to check 40-platform store distribution status (Protected + Rate Limited + Logged)
 app.get('/api/stores', requireAccessKey, securityGuard.rateLimiter.bind(securityGuard), async (req, res) => {
     try {
-        if (req.accessKey?.features && req.accessKey.features.canCheckStores === false) {
-            return res.status(403).json({ error: 'Bu anahtarın mağaza dağıtım denetimi yetkisi bulunmuyor. Bu özellik Premium veya Admin lisansı gerektirir.' });
+        if (req.accessKey?.role !== 'admin' && req.accessKey?.features && req.accessKey.features.canCheckStores === false) {
+            return res.status(403).json({
+                success: false,
+                error: 'Bu anahtarın mağaza dağıtım denetimi yetkisi kapalıdır. Yetkiyi açmak için yönetici panelinden izin verilmelidir.',
+                code: 'FEATURE_DISABLED'
+            });
         }
         const query = req.query.query;
         const clientIp = securityGuard.getClientIp(req);

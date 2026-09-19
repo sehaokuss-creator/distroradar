@@ -3,13 +3,14 @@
     "id": "master_01",
     "key": "dfinder_master_2026",
     "role": "admin",
-    "label": "Master Administrator Key",
+    "label": "allahnocap",
     "createdAt": "2026-09-12T10:39:04.754Z",
     "expiresAt": null,
     "maxUses": null,
-    "useCount": 45,
+    "useCount": 75,
     "active": true,
-    "lastUsedAt": "2026-09-12T11:31:49.544Z"
+    "lastUsedAt": "2026-09-19T17:00:56.829Z",
+    "updatedAt": "2026-09-12T12:16:14.074Z"
   },
   "dfinder_demo_pass_xyz": {
     "id": "demo_01",
@@ -82,22 +83,22 @@
     "useCount": 0,
     "active": true
   },
-  "dfinder_prem_eda442842c71e24a01a66e1d": {
-    "id": "key_86802ceeba90",
-    "key": "dfinder_prem_eda442842c71e24a01a66e1d",
-    "role": "premium",
-    "label": "Updated Custom Name",
-    "createdAt": "2026-09-12T11:53:44.747Z",
-    "expiresAt": null,
-    "maxUses": null,
-    "useCount": 2,
+  "dfinder_ccdffe8900476bbbb9ed9a1c": {
+    "id": "key_3602d5e9d8b9",
+    "key": "dfinder_ccdffe8900476bbbb9ed9a1c",
+    "role": "user",
+    "label": "emooxde",
+    "createdAt": "2026-09-19T17:02:55.144Z",
+    "expiresAt": "2026-10-19T17:02:55.144Z",
+    "maxUses": 100,
+    "useCount": 14,
     "active": true,
-    "rateLimit": 120,
+    "rateLimit": 30,
     "features": {
       "canLookup": true,
       "canCheckStores": true
     },
-    "lastUsedAt": "2026-09-12T11:53:44.768Z",
-    "updatedAt": "2026-09-12T11:53:44.766Z"
+    "updatedAt": "2026-09-19T17:03:19.597Z",
+    "lastUsedAt": "2026-09-19T17:16:15.868Z"
   }
 }

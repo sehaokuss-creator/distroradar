@@ -242,6 +242,13 @@
             <span id="headerKeyDisplay" class="text-zinc-500 font-mono text-[11px] hidden sm:inline">dfinder_...</span>
           </div>
 
+          <!-- 30-Minute Rolling Session Indicator -->
+          <div id="sessionCountdownBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono shadow-sm cursor-pointer hover:border-emerald-500/40 transition" onclick="touchUserSession(true)" title="30 dakikalık aktif oturum süreniz. Tıklayarak veya işlem yaparak oturumu 30 dakikaya uzatabilirsiniz.">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-zinc-500 hidden sm:inline">Oturum:</span>
+            <span id="sessionCountdownText" class="text-emerald-400 font-bold">30:00</span>
+          </div>
+
           <!-- Language Switcher -->
           <button
             onclick="toggleLanguage()"
@@ -629,8 +636,74 @@
       showToast({ title: 'Language', message: currentLang === 'en' ? 'Language switched to English' : 'Dil Türkçe olarak ayarlandı', type: 'info' });
     }
 
-    // Auth State
-    let activeKey = localStorage.getItem('dfinder_key') || null;
+    // Auth & 30-Minute Rolling Session State
+    const USER_SESSION_DURATION = 30 * 60 * 1000; // 30 minutes
+    let activeKey = null;
+    let activeUserData = null;
+    let sessionExpiresAt = null;
+    let sessionTimerInterval = null;
+
+    function saveUserSession(key, userData) {
+      activeKey = key;
+      activeUserData = userData;
+      sessionExpiresAt = Date.now() + USER_SESSION_DURATION;
+      const sessionObj = {
+        key: activeKey,
+        expiresAt: sessionExpiresAt,
+        userData: activeUserData
+      };
+      localStorage.setItem('dfinder_user_session', JSON.stringify(sessionObj));
+      localStorage.setItem('dfinder_key', activeKey);
+      startSessionTimer();
+    }
+
+    function touchUserSession(notify = false) {
+      if (!activeKey) return;
+      sessionExpiresAt = Date.now() + USER_SESSION_DURATION;
+      const sessionObj = {
+        key: activeKey,
+        expiresAt: sessionExpiresAt,
+        userData: activeUserData
+      };
+      localStorage.setItem('dfinder_user_session', JSON.stringify(sessionObj));
+      updateSessionCountdownUI();
+      if (notify) {
+        showToast({ title: 'Oturum Yenilendi', message: '30 dakikalık aktif süreniz sıfırlandı.', type: 'info' });
+      }
+    }
+
+    function startSessionTimer() {
+      if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+      updateSessionCountdownUI();
+      sessionTimerInterval = setInterval(updateSessionCountdownUI, 1000);
+    }
+
+    function updateSessionCountdownUI() {
+      if (!sessionExpiresAt) return;
+      const remainingMs = sessionExpiresAt - Date.now();
+      if (remainingMs <= 0) {
+        clearInterval(sessionTimerInterval);
+        handleSignOut(true);
+        return;
+      }
+      const totalSec = Math.floor(remainingMs / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const formatted = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      const el = document.getElementById('sessionCountdownText');
+      if (el) el.innerText = formatted;
+    }
+
+    // Auto touch session on user activity (debounced to once every 10 seconds)
+    let lastActivityTouch = Date.now();
+    ['click', 'keydown', 'touchstart'].forEach(evt => {
+      window.addEventListener(evt, () => {
+        if (activeKey && Date.now() - lastActivityTouch > 10000) {
+          lastActivityTouch = Date.now();
+          touchUserSession();
+        }
+      }, { passive: true });
+    });
 
     async function verifyAndUnlockKey(key, silent = false) {
       try {
@@ -641,27 +714,30 @@
         });
         const data = await res.json();
         if (data.valid) {
-          activeKey = key;
-          localStorage.setItem('dfinder_key', key);
+          saveUserSession(key, data);
           
           if (!silent) {
-            showUserLoader('Katalog Kimliği Doğrulanıyor...', 'Erişim anahtarı başarıyla onaylandı.', 70);
+            showUserLoader('Katalog Kimliği Doğrulanıyor...', 'Erişim anahtarı başarıyla onaylandı (30 dk oturum).', 70);
             setTimeout(() => {
               hideUserLoader();
               showDashboard(data);
-              showToast({ title: 'Erişim Başarılı', message: 'Katalog istihbarat radarı açıldı.', type: 'success' });
+              showToast({ title: 'Erişim Başarılı', message: 'Katalog istihbarat radarı açıldı (30 dk oturum).', type: 'success' });
             }, 850);
           } else {
             showDashboard(data);
           }
           return true;
         } else {
+          localStorage.removeItem('dfinder_user_session');
           localStorage.removeItem('dfinder_key');
-          showLoginError(data.reason || 'Invalid access key.');
+          activeKey = null;
+          showLoginError(data.reason || 'Geçersiz erişim anahtarı.');
           return false;
         }
       } catch (e) {
-        showLoginError('Connection error. Please try again.');
+        if (!silent) {
+          showLoginError('Bağlantı hatası. Lütfen tekrar deneyiniz.');
+        }
         return false;
       }
     }
@@ -670,8 +746,10 @@
       document.getElementById('loginGate').classList.add('hidden');
       document.getElementById('appDashboard').classList.remove('hidden');
 
-      const maskedKey = activeKey.length > 18 ? activeKey.slice(0, 10) + '...' + activeKey.slice(-4) : activeKey;
-      document.getElementById('headerKeyDisplay').innerText = maskedKey;
+      if (activeKey) {
+        const maskedKey = activeKey.length > 18 ? activeKey.slice(0, 10) + '...' + activeKey.slice(-4) : activeKey;
+        document.getElementById('headerKeyDisplay').innerText = maskedKey;
+      }
 
       const userName = userData.label || 'Kullanıcı';
       document.getElementById('headerUserName').innerText = userName;
@@ -709,6 +787,8 @@
         const data = await res.json();
         if (data.success) {
           document.getElementById('headerUserName').innerText = clean;
+          if (activeUserData) activeUserData.label = clean;
+          touchUserSession();
           showToast({ title: 'Kullanıcı Adı Güncellendi', message: `İsminiz "${clean}" olarak kaydedildi.`, type: 'success' });
         } else {
           showToast({ title: 'Hata', message: data.error || 'İsim değiştirilemedi.', type: 'error' });
@@ -752,11 +832,24 @@
       text.innerText = 'Panele Giriş Yap';
     }
 
-    function handleSignOut() {
+    function handleSignOut(isTimeout = false) {
+      if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+      localStorage.removeItem('dfinder_user_session');
+      localStorage.removeItem('dfinder_key');
+      activeKey = null;
+      activeUserData = null;
+      sessionExpiresAt = null;
+
+      if (isTimeout) {
+        document.getElementById('appDashboard').classList.add('hidden');
+        document.getElementById('loginGate').classList.remove('hidden');
+        document.getElementById('accessKeyInput').value = '';
+        showLoginError('30 dakikalık oturum süreniz doldu. Lütfen anahtarınızı tekrar giriniz.');
+        return;
+      }
+
       showUserLoader('Oturum Kapatılıyor...', 'Güvenlik anahtarı bellekten siliniyor...', 75);
       setTimeout(() => {
-        localStorage.removeItem('dfinder_key');
-        activeKey = null;
         document.getElementById('appDashboard').classList.add('hidden');
         document.getElementById('loginGate').classList.remove('hidden');
         document.getElementById('accessKeyInput').value = '';
@@ -768,8 +861,34 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       applyLanguage(currentLang);
-      if (activeKey) {
-        verifyAndUnlockKey(activeKey, true);
+
+      // Check 30-minute rolling session
+      const savedSessionRaw = localStorage.getItem('dfinder_user_session');
+      if (savedSessionRaw) {
+        try {
+          const session = JSON.parse(savedSessionRaw);
+          if (session.key && session.expiresAt && session.expiresAt > Date.now()) {
+            activeKey = session.key;
+            sessionExpiresAt = session.expiresAt;
+            activeUserData = session.userData || { role: 'user', label: 'Kullanıcı' };
+            showDashboard(activeUserData);
+            startSessionTimer();
+            // Verify in background
+            verifyAndUnlockKey(activeKey, true);
+            return;
+          } else {
+            localStorage.removeItem('dfinder_user_session');
+            localStorage.removeItem('dfinder_key');
+            showLoginError('30 dakikalık oturum süreniz doldu. Lütfen anahtarınızı tekrar giriniz.');
+          }
+        } catch (e) {
+          localStorage.removeItem('dfinder_user_session');
+        }
+      } else {
+        const legacyKey = localStorage.getItem('dfinder_key');
+        if (legacyKey) {
+          verifyAndUnlockKey(legacyKey, false);
+        }
       }
     });
 
@@ -950,9 +1069,13 @@
         });
         
         if (res.status === 401 || res.status === 403) {
-          handleSignOut();
-          showLoginError('Erişim anahtarınızın süresi dolmuş veya geçersiz.');
-          return;
+          const errData = await res.json().catch(() => ({}));
+          if (errData.code === 'INVALID_KEY' || res.status === 401) {
+            handleSignOut();
+            showLoginError('Erişim anahtarınızın süresi dolmuş veya geçersiz.');
+            return;
+          }
+          throw new Error(errData.error || 'Erişim yetkiniz bulunmuyor.');
         }
 
         if (res.status === 429) {
@@ -964,6 +1087,8 @@
         if (!res.ok || !json.success) {
           throw new Error(json.error || 'Şarkı bilgisi alınamadı.');
         }
+
+        touchUserSession();
 
         if (json.type === 'track') {
           renderTrackResult(json.data);
@@ -1060,9 +1185,18 @@
         });
 
         if (res.status === 401 || res.status === 403) {
-          handleSignOut();
-          showLoginError('Erişim anahtarınızın süresi dolmuş veya geçersiz.');
-          return;
+          const errData = await res.json().catch(() => ({}));
+          if (errData.code === 'FEATURE_DISABLED') {
+            document.getElementById('storeErrorMessage').innerText = errData.error || 'Bu anahtarın mağaza dağıtım denetimi yetkisi kapalıdır. Yönetici panelinden izin verilmelidir.';
+            errorBox.classList.remove('hidden');
+            return;
+          }
+          if (errData.code === 'INVALID_KEY' || res.status === 401) {
+            handleSignOut();
+            showLoginError('Erişim anahtarınızın süresi dolmuş veya geçersiz.');
+            return;
+          }
+          throw new Error(errData.error || 'Mağaza dağıtımı denetlenemedi.');
         }
 
         if (res.status === 429) {
@@ -1074,6 +1208,8 @@
         if (!res.ok || !json.success) {
           throw new Error(json.error || 'Mağaza dağıtımı denetlenemedi.');
         }
+
+        touchUserSession();
 
         const data = json.data;
         storeResults = data.stores;
