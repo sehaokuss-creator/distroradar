@@ -375,13 +375,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- 30-Minute Admin Session Indicator -->
-          <div id="adminSessionCountdownBadge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono shadow-sm cursor-pointer hover:border-amber-500/40 transition" onclick="touchAdminSession(true)" title="30 dakikalık aktif yönetici oturum süreniz. Tıklayarak veya işlem yaparak oturumu 30 dakikaya uzatabilirsiniz.">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span class="text-zinc-500 hidden md:inline">Oturum:</span>
-            <span id="adminSessionCountdownText" class="text-amber-400 font-bold">30:00</span>
-          </div>
-
           <a href="/" target="_blank" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition flex items-center gap-1.5">
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
             <span class="hidden sm:inline">Canlı Site</span>
@@ -757,7 +750,7 @@
       startAdminSessionTimer();
     }
 
-    function touchAdminSession(notify = false) {
+    function touchAdminSession() {
       if (!adminToken) return;
       adminExpiresAt = Date.now() + ADMIN_SESSION_DURATION;
       localStorage.setItem('distro_admin_session', JSON.stringify({
@@ -765,9 +758,6 @@
         expiresAt: adminExpiresAt
       }));
       updateAdminSessionCountdownUI();
-      if (notify) {
-        showToast({ title: 'Oturum Uzatıldı', message: '30 dakikalık yönetici oturum süreniz sıfırlandı.', type: 'info' });
-      }
     }
 
     function startAdminSessionTimer() {
@@ -944,7 +934,7 @@
           setTimeout(() => {
             hideLoader();
             unlockAdminDashboard();
-            showToast({ title: 'Giriş Başarılı', message: 'Yönetici paneli başarıyla açıldı (30 dk oturum).', type: 'success' });
+            showToast({ title: 'Giriş Başarılı', message: 'Yönetici paneli başarıyla açıldı.', type: 'success' });
           }, 800);
 
         } else {
@@ -973,9 +963,9 @@
         document.getElementById('adminDashboard').classList.add('hidden');
         document.getElementById('adminLoginGate').classList.remove('hidden');
         document.getElementById('adminPasswordInput').value = '';
-        document.getElementById('adminLoginErrorText').innerText = '30 dakikalık yönetici oturum süreniz doldu. Lütfen tekrar giriş yapınız.';
+        document.getElementById('adminLoginErrorText').innerText = 'Oturum süreniz doldu. Lütfen tekrar giriş yapınız.';
         document.getElementById('adminLoginError').classList.remove('hidden');
-        showToast({ title: 'Oturum Sona Erdi', message: '30 dakikalık oturum süreniz doldu. Lütfen tekrar giriş yapınız.', type: 'error' });
+        showToast({ title: 'Oturum Sona Erdi', message: 'Oturum süreniz doldu. Lütfen tekrar giriş yapınız.', type: 'error' });
         return;
       }
 
@@ -1873,7 +1863,7 @@
           } else {
             localStorage.removeItem('distro_admin_session');
             sessionStorage.removeItem('distro_admin_token');
-            document.getElementById('adminLoginErrorText').innerText = '30 dakikalık yönetici oturum süreniz doldu. Lütfen tekrar giriş yapınız.';
+            document.getElementById('adminLoginErrorText').innerText = 'Oturum süreniz doldu. Lütfen tekrar giriş yapınız.';
             document.getElementById('adminLoginError').classList.remove('hidden');
           }
         } catch (e) {

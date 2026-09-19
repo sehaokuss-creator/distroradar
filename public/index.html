@@ -242,13 +242,6 @@
             <span id="headerKeyDisplay" class="text-zinc-500 font-mono text-[11px] hidden sm:inline">dfinder_...</span>
           </div>
 
-          <!-- 30-Minute Rolling Session Indicator -->
-          <div id="sessionCountdownBadge" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs font-mono shadow-sm cursor-pointer hover:border-emerald-500/40 transition" onclick="touchUserSession(true)" title="30 dakikalık aktif oturum süreniz. Tıklayarak veya işlem yaparak oturumu 30 dakikaya uzatabilirsiniz.">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-zinc-500 hidden sm:inline">Oturum:</span>
-            <span id="sessionCountdownText" class="text-emerald-400 font-bold">30:00</span>
-          </div>
-
           <!-- Language Switcher -->
           <button
             onclick="toggleLanguage()"
@@ -657,7 +650,7 @@
       startSessionTimer();
     }
 
-    function touchUserSession(notify = false) {
+    function touchUserSession() {
       if (!activeKey) return;
       sessionExpiresAt = Date.now() + USER_SESSION_DURATION;
       const sessionObj = {
@@ -667,9 +660,6 @@
       };
       localStorage.setItem('dfinder_user_session', JSON.stringify(sessionObj));
       updateSessionCountdownUI();
-      if (notify) {
-        showToast({ title: 'Oturum Yenilendi', message: '30 dakikalık aktif süreniz sıfırlandı.', type: 'info' });
-      }
     }
 
     function startSessionTimer() {
@@ -717,11 +707,11 @@
           saveUserSession(key, data);
           
           if (!silent) {
-            showUserLoader('Katalog Kimliği Doğrulanıyor...', 'Erişim anahtarı başarıyla onaylandı (30 dk oturum).', 70);
+            showUserLoader('Katalog Kimliği Doğrulanıyor...', 'Erişim anahtarı başarıyla onaylandı.', 70);
             setTimeout(() => {
               hideUserLoader();
               showDashboard(data);
-              showToast({ title: 'Erişim Başarılı', message: 'Katalog istihbarat radarı açıldı (30 dk oturum).', type: 'success' });
+              showToast({ title: 'Erişim Başarılı', message: 'Katalog istihbarat radarı açıldı.', type: 'success' });
             }, 850);
           } else {
             showDashboard(data);
@@ -844,7 +834,7 @@
         document.getElementById('appDashboard').classList.add('hidden');
         document.getElementById('loginGate').classList.remove('hidden');
         document.getElementById('accessKeyInput').value = '';
-        showLoginError('30 dakikalık oturum süreniz doldu. Lütfen anahtarınızı tekrar giriniz.');
+        showLoginError('Oturum süreniz doldu. Lütfen anahtarınızı tekrar giriniz.');
         return;
       }
 
@@ -862,7 +852,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       applyLanguage(currentLang);
 
-      // Check 30-minute rolling session
+      // Check rolling session
       const savedSessionRaw = localStorage.getItem('dfinder_user_session');
       if (savedSessionRaw) {
         try {
@@ -879,7 +869,7 @@
           } else {
             localStorage.removeItem('dfinder_user_session');
             localStorage.removeItem('dfinder_key');
-            showLoginError('30 dakikalık oturum süreniz doldu. Lütfen anahtarınızı tekrar giriniz.');
+            showLoginError('Oturum süreniz doldu. Lütfen anahtarınızı tekrar giriniz.');
           }
         } catch (e) {
           localStorage.removeItem('dfinder_user_session');

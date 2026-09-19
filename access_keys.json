@@ -91,7 +91,7 @@
     "createdAt": "2026-09-19T17:02:55.144Z",
     "expiresAt": "2026-10-19T17:02:55.144Z",
     "maxUses": 100,
-    "useCount": 14,
+    "useCount": 15,
     "active": true,
     "rateLimit": 30,
     "features": {
@@ -99,6 +99,6 @@
       "canCheckStores": true
     },
     "updatedAt": "2026-09-19T17:03:19.597Z",
-    "lastUsedAt": "2026-09-19T17:16:15.868Z"
+    "lastUsedAt": "2026-09-19T17:19:03.499Z"
   }
 }
