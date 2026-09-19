@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title DistroRadar Pro 7/24 Kesintisiz Sunucu
+title DistroRadar Pro - Cloudflare & Sunucu Başlatıcı
 cd /d "%~dp0"
 color 0b
 
